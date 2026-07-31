@@ -1,0 +1,130 @@
+{
+  "artifact_code": "STRUCTURE_BUILD_INSPECTION_CONFIG_V0",
+  "artifact_type": "STRUCTURE",
+  "content": "# STRUCTURE_BUILD_INSPECTION_CONFIG_V0\n\n**Artifact Type**: STRUCTURE\n**Version**: V0\n**Governed By**: fb.structure::CONSTITUTION_STRUCTURE_V0\n\n---\n\n## Purpose\n\nSelf-describing build manifest for the **inspection** domain (`inspection::`) \u2014 the governed\nboundary surface of the Protocol Inspection Surface.\n\nThis is a **tool domain**: it declares capabilities *about* a snapshot rather than business\ncapabilities *within* one. It consumes the assembled snapshot exactly as the runtime does, which\nmakes it a peer of the runtime, not part of the normative platform. Its artifacts are applications\nof the governance language, never extensions of it, so they live here rather than in\n`software_governance`.\n\nThe domain declares **only boundary contracts** \u2014 TI/TE pairs for the `si.` operation family. It\nhas no workflow, no capability contract and no runtime binding, because inspection does not\nexecute: an `si.` operation resolves through `handler.kind: SNAPSHOT_READ` / `SNAPSHOT_QUERY` to\nthe inspector's static entry point, never through the runtime scheduler. A tool domain is\ntherefore the first PGC domain whose artifact set is boundary-only.\n\nThe namespace is `inspection::` rather than one derived from this repository. A namespace names\nthe capability family, not the directory that happens to hold it \u2014 and PGC already publishes\nartifacts whose namespace differs from their snapshot location, so a location-derived namespace\nwould become inaccurate the moment the surface moved.\n\n---\n\n## Machine\n\n```yaml\nfqdn: inspection::STRUCTURE_BUILD_INSPECTION_CONFIG_V0\nartifact_kind: STRUCTURE\nversion: V0\ngoverned_by: fb.structure::CONSTITUTION_STRUCTURE_V0\nstructure_scope: inspection\ncore:\n  summary: Build-time STRUCTURE manifest (inspection tool-domain scope)\n  description: 'Compiles the inspection domain''s own boundary artifacts (TI/TE), resolving\n    governance references against the imported compiled platform surface. Emits only inspection\n    artifacts. Self-describing: declares its own source layers and namespace rule additively.\n\n    '\nlayer_definitions:\n  INSPECTION:\n    domain_subpath: registry\n    registry_module: inspection.registry\n    layer_category: workload\n  INSPECTION_TRANSPORT:\n    domain_subpath: transport\n    registry_module: inspection.transport\n    layer_category: workload\nidentity_rules:\n- match: inspection.registry\n  namespace: inspection\n- match: inspection.transport\n  namespace: inspection\nartifact_discovery:\n  search_layers:\n  - INSPECTION\n  - INSPECTION_TRANSPORT\n  import_surface:\n    domain: platform\n  artifact_types:\n  - STRUCTURE\n  - TI\n  - TE\noutput_configuration:\n  artifacts:\n    layer: PROTOCOL_BUILD_ROOT\n    subpath: compiled/canonical\n  vocabulary_projection_path:\n    layer: GOVERNANCE\n    subpath: compiled/vocabulary\n  tokenized_projection_path:\n    layer: GOVERNANCE\n    subpath: compiled/tokenized\n  evidence_projection_path:\n    layer: GOVERNANCE\n    subpath: compiled/evidence\n  trust_attestation_path:\n    layer: GOVERNANCE\n    subpath: compiled/trust\n  visualization_projection_path:\n    layer: GOVERNANCE\n    subpath: compiled/visualization\n  layer_outputs:\n    INSPECTION:\n      layer: INSPECTION\n      subpath: compiled/canonical\n    INSPECTION_TRANSPORT:\n      layer: INSPECTION\n      subpath: compiled/canonical\n  bootstrap_search_roots:\n  - layer: GOVERNANCE\n    subpath: structure/structures\nbuild_phases:\n- phase: discover\n  description: Discover inspection artifacts via STRUCTURE\n- phase: parse\n  description: Parse artifacts into canonical machine form\n- phase: normalize\n  description: Resolve references (inspection + imported platform surface)\n- phase: validate\n  description: Validate artifacts using compiler schema rules\n- phase: assert\n  description: Evaluate cross-artifact invariants (boundary closure)\n- phase: materialize\n  description: Emit deterministic compiled artifacts (inspection scope only)\n  target: compiled/artifacts/\n```\n\n## Version History\n\n- **V0**: First PGC tool-domain build manifest. Compiles `inspection::` boundary contracts against\n  the imported compiled platform surface; emits only inspection artifacts. Platform surface\n  unchanged.\n",
+  "content_hash": "650dd8650e2c2458831d027a96d4adf50c2274de1560be974a8877b68dfc456d",
+  "fqdn_id": "inspection::STRUCTURE_BUILD_INSPECTION_CONFIG_V0",
+  "frontmatter": {
+    "artifact_discovery": {
+      "artifact_types": [
+        "STRUCTURE",
+        "TI",
+        "TE"
+      ],
+      "import_surface": {
+        "domain": "platform"
+      },
+      "search_layers": [
+        "INSPECTION",
+        "INSPECTION_TRANSPORT"
+      ]
+    },
+    "artifact_kind": "STRUCTURE",
+    "build_phases": [
+      {
+        "description": "Discover inspection artifacts via STRUCTURE",
+        "phase": "discover"
+      },
+      {
+        "description": "Parse artifacts into canonical machine form",
+        "phase": "parse"
+      },
+      {
+        "description": "Resolve references (inspection + imported platform surface)",
+        "phase": "normalize"
+      },
+      {
+        "description": "Validate artifacts using compiler schema rules",
+        "phase": "validate"
+      },
+      {
+        "description": "Evaluate cross-artifact invariants (boundary closure)",
+        "phase": "assert"
+      },
+      {
+        "description": "Emit deterministic compiled artifacts (inspection scope only)",
+        "phase": "materialize",
+        "target": "compiled/artifacts/"
+      }
+    ],
+    "core": {
+      "description": "Compiles the inspection domain's own boundary artifacts (TI/TE), resolving governance references against the imported compiled platform surface. Emits only inspection artifacts. Self-describing: declares its own source layers and namespace rule additively.\n",
+      "summary": "Build-time STRUCTURE manifest (inspection tool-domain scope)"
+    },
+    "fqdn": "inspection::STRUCTURE_BUILD_INSPECTION_CONFIG_V0",
+    "governed_by": "fb.structure::CONSTITUTION_STRUCTURE_V0",
+    "identity_rules": [
+      {
+        "match": "inspection.registry",
+        "namespace": "inspection"
+      },
+      {
+        "match": "inspection.transport",
+        "namespace": "inspection"
+      }
+    ],
+    "layer_definitions": {
+      "INSPECTION": {
+        "domain_subpath": "registry",
+        "layer_category": "workload",
+        "registry_module": "inspection.registry"
+      },
+      "INSPECTION_TRANSPORT": {
+        "domain_subpath": "transport",
+        "layer_category": "workload",
+        "registry_module": "inspection.transport"
+      }
+    },
+    "output_configuration": {
+      "artifacts": {
+        "layer": "PROTOCOL_BUILD_ROOT",
+        "subpath": "compiled/canonical"
+      },
+      "bootstrap_search_roots": [
+        {
+          "layer": "GOVERNANCE",
+          "subpath": "structure/structures"
+        }
+      ],
+      "evidence_projection_path": {
+        "layer": "GOVERNANCE",
+        "subpath": "compiled/evidence"
+      },
+      "layer_outputs": {
+        "INSPECTION": {
+          "layer": "INSPECTION",
+          "subpath": "compiled/canonical"
+        },
+        "INSPECTION_TRANSPORT": {
+          "layer": "INSPECTION",
+          "subpath": "compiled/canonical"
+        }
+      },
+      "tokenized_projection_path": {
+        "layer": "GOVERNANCE",
+        "subpath": "compiled/tokenized"
+      },
+      "trust_attestation_path": {
+        "layer": "GOVERNANCE",
+        "subpath": "compiled/trust"
+      },
+      "visualization_projection_path": {
+        "layer": "GOVERNANCE",
+        "subpath": "compiled/visualization"
+      },
+      "vocabulary_projection_path": {
+        "layer": "GOVERNANCE",
+        "subpath": "compiled/vocabulary"
+      }
+    },
+    "structure_scope": "inspection",
+    "version": "V0"
+  },
+  "layer_code": "INSPECTION",
+  "module_path": "inspection.registry.structures",
+  "namespace": "inspection",
+  "references": [
+    "fb.structure::CONSTITUTION_STRUCTURE_V0"
+  ],
+  "version": "0"
+}

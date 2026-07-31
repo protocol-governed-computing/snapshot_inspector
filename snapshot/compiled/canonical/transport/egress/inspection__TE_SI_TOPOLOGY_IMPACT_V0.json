@@ -1,0 +1,53 @@
+{
+  "artifact_code": "TE_SI_TOPOLOGY_IMPACT_V0",
+  "artifact_type": "TE",
+  "content": "# TE_SI_TOPOLOGY_IMPACT_V0\n\n**Kind:** Transport Egress Contract (Transport Standard V0 \u00a77)\n**Operation Identity:** `si.topology.impact`\n\nClassifies an inspection result into a protocol-neutral Result Class and declares the output\nprojection. It carries **no** protocol semantics \u2014 no HTTP status, no exit code\n(`RESULT_CLASS_PROTOCOL_INDEPENDENCE`); the adapter alone projects a Result Class onto a wire\nrepresentation (`RESPONSE_PROJECTION_EXTERNAL`).\n\nThis operation DERIVES its result by traversing snapshot state (`SNAPSHOT_QUERY`).\n\nThe inspector's `NOT_FOUND` is a *governed answer*, not a boundary failure: the request was\nadmitted and answered, and the subject it named does not exist. It is neither `VIOLATION`\n(nothing was violated) nor `OPERATION_NOT_FOUND` (the identity resolved perfectly well).\n\n`output_contract` enumerates every field that crosses the boundary. The enumeration IS the\ncontract \u2014 an inspection payload is never passed through wholesale, because a boundary exposing\nwhatever a handler happened to return would declare nothing.\n\nInspection executes nothing and so produces no trace: `evidence_policy: none`. Declaring\n`reference_only` here would promise evidence that cannot exist.\n\n## Machine\n\n```yaml\nfqdn: inspection::TE_SI_TOPOLOGY_IMPACT_V0\nartifact_kind: TRANSPORT_EGRESS\nversion: v0\ngoverned_by: fb.transport::CONSTITUTION_TRANSPORT_EGRESS_V0\noperation: si.topology.impact\n\nresult_classification:\n  SUCCESS:   SUCCESS\n  NOT_FOUND: NOT_FOUND\ndefault_result_class: EXECUTION_FAILURE\n\noutput_contract:\n- { field: artifact           , from: surface.artifact }\n- { field: kind               , from: surface.kind }\n- { field: traversable        , from: surface.traversable }\n- { field: impacted_count     , from: surface.impacted_count }\n- { field: impacted_namespaces, from: surface.impacted_namespaces }\n- { field: impact             , from: surface.impact }\n\nevidence_policy: none\n```\n",
+  "content_hash": "b09a8632cbc51fe3f6d5635603145f1cfe2f5750d2da26308560ff942d5d99d7",
+  "fqdn_id": "inspection::TE_SI_TOPOLOGY_IMPACT_V0",
+  "frontmatter": {
+    "artifact_kind": "TRANSPORT_EGRESS",
+    "default_result_class": "EXECUTION_FAILURE",
+    "evidence_policy": "none",
+    "fqdn": "inspection::TE_SI_TOPOLOGY_IMPACT_V0",
+    "governed_by": "fb.transport::CONSTITUTION_TRANSPORT_EGRESS_V0",
+    "operation": "si.topology.impact",
+    "output_contract": [
+      {
+        "field": "artifact",
+        "from": "surface.artifact"
+      },
+      {
+        "field": "kind",
+        "from": "surface.kind"
+      },
+      {
+        "field": "traversable",
+        "from": "surface.traversable"
+      },
+      {
+        "field": "impacted_count",
+        "from": "surface.impacted_count"
+      },
+      {
+        "field": "impacted_namespaces",
+        "from": "surface.impacted_namespaces"
+      },
+      {
+        "field": "impact",
+        "from": "surface.impact"
+      }
+    ],
+    "result_classification": {
+      "NOT_FOUND": "NOT_FOUND",
+      "SUCCESS": "SUCCESS"
+    },
+    "version": "v0"
+  },
+  "layer_code": "INSPECTION_TRANSPORT",
+  "module_path": "inspection.transport",
+  "namespace": "inspection",
+  "references": [
+    "fb.transport::CONSTITUTION_TRANSPORT_EGRESS_V0"
+  ],
+  "version": "0"
+}

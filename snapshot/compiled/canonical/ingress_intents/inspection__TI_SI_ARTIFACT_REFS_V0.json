@@ -1,0 +1,40 @@
+{
+  "artifact_code": "TI_SI_ARTIFACT_REFS_V0",
+  "artifact_type": "TI",
+  "content": "# TI_SI_ARTIFACT_REFS_V0\n\n**Kind:** Transport Ingress Contract (Transport Standard V0 \u00a76)\n**Operation Identity:** `si.artifact.refs`\n\nDeclares the admission semantics for `si.artifact.refs`: its input contract, the handler it binds to,\nand how the canonical input maps onto that handler.\n\n`handler.kind: SNAPSHOT_QUERY` selects the inspector's static entry point rather than the runtime's.\nThe engine routes by KIND and stops there \u2014 the inspector resolves `handler.operation` through\nits own internal registry. No resolver or adapter code interprets the operation string; one that\ndid would be a hidden RPC router.\n\nEach `si.` operation carries its own TI/TE pair. The family shares one HTTP route, but sharing a\nroute is a protocol convenience; sharing a governed identity would leave the boundary unable to\nadmit one operation and refuse another.\n\n## Machine\n\n```yaml\nfqdn: inspection::TI_SI_ARTIFACT_REFS_V0\nartifact_kind: TRANSPORT_INGRESS\nversion: v0\ngoverned_by: fb.transport::CONSTITUTION_TRANSPORT_INGRESS_V0\noperation: si.artifact.refs\n\n# Input contract \u2014 declared and enforced at the boundary before the handler is reached.\ninput_contract:\n  artifact:\n    type: string\n    required: true\n  transitive:\n    type: boolean\n    required: false\n\n# Context requirements \u2014 inert in V0 (AC reserved).\ncontext_requirements: []\n\nhandler:\n  kind: SNAPSHOT_QUERY\n  operation: si.artifact.refs\n  payload_template:\n    artifact: \"${input.artifact}\"\n    transitive: \"${input.transitive}\"\n```\n",
+  "content_hash": "fca8a6faa90d3acec44d413b088989271dbac60651c4f73e7c603ea7c10cb4e8",
+  "fqdn_id": "inspection::TI_SI_ARTIFACT_REFS_V0",
+  "frontmatter": {
+    "artifact_kind": "TRANSPORT_INGRESS",
+    "context_requirements": [],
+    "fqdn": "inspection::TI_SI_ARTIFACT_REFS_V0",
+    "governed_by": "fb.transport::CONSTITUTION_TRANSPORT_INGRESS_V0",
+    "handler": {
+      "kind": "SNAPSHOT_QUERY",
+      "operation": "si.artifact.refs",
+      "payload_template": {
+        "artifact": "${input.artifact}",
+        "transitive": "${input.transitive}"
+      }
+    },
+    "input_contract": {
+      "artifact": {
+        "required": true,
+        "type": "string"
+      },
+      "transitive": {
+        "required": false,
+        "type": "boolean"
+      }
+    },
+    "operation": "si.artifact.refs",
+    "version": "v0"
+  },
+  "layer_code": "INSPECTION_TRANSPORT",
+  "module_path": "inspection.transport",
+  "namespace": "inspection",
+  "references": [
+    "fb.transport::CONSTITUTION_TRANSPORT_INGRESS_V0"
+  ],
+  "version": "0"
+}

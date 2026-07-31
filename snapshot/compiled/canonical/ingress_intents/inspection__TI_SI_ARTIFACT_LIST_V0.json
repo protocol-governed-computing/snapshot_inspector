@@ -1,0 +1,40 @@
+{
+  "artifact_code": "TI_SI_ARTIFACT_LIST_V0",
+  "artifact_type": "TI",
+  "content": "# TI_SI_ARTIFACT_LIST_V0\n\n**Kind:** Transport Ingress Contract (Transport Standard V0 \u00a76)\n**Operation Identity:** `si.artifact.list`\n\nDeclares the admission semantics for `si.artifact.list`: its input contract, the handler it binds to,\nand how the canonical input maps onto that handler.\n\n`handler.kind: SNAPSHOT_READ` selects the inspector's static entry point rather than the runtime's.\nThe engine routes by KIND and stops there \u2014 the inspector resolves `handler.operation` through\nits own internal registry. No resolver or adapter code interprets the operation string; one that\ndid would be a hidden RPC router.\n\nEach `si.` operation carries its own TI/TE pair. The family shares one HTTP route, but sharing a\nroute is a protocol convenience; sharing a governed identity would leave the boundary unable to\nadmit one operation and refuse another.\n\n## Machine\n\n```yaml\nfqdn: inspection::TI_SI_ARTIFACT_LIST_V0\nartifact_kind: TRANSPORT_INGRESS\nversion: v0\ngoverned_by: fb.transport::CONSTITUTION_TRANSPORT_INGRESS_V0\noperation: si.artifact.list\n\n# Input contract \u2014 declared and enforced at the boundary before the handler is reached.\ninput_contract:\n  kind:\n    type: string\n    required: false\n  domain:\n    type: string\n    required: false\n\n# Context requirements \u2014 inert in V0 (AC reserved).\ncontext_requirements: []\n\nhandler:\n  kind: SNAPSHOT_READ\n  operation: si.artifact.list\n  payload_template:\n    kind: \"${input.kind}\"\n    domain: \"${input.domain}\"\n```\n",
+  "content_hash": "f497079d514ea19fe6ac5b7c6ad5aeff6c65bb44ccad234c96806d56f83a6a9f",
+  "fqdn_id": "inspection::TI_SI_ARTIFACT_LIST_V0",
+  "frontmatter": {
+    "artifact_kind": "TRANSPORT_INGRESS",
+    "context_requirements": [],
+    "fqdn": "inspection::TI_SI_ARTIFACT_LIST_V0",
+    "governed_by": "fb.transport::CONSTITUTION_TRANSPORT_INGRESS_V0",
+    "handler": {
+      "kind": "SNAPSHOT_READ",
+      "operation": "si.artifact.list",
+      "payload_template": {
+        "domain": "${input.domain}",
+        "kind": "${input.kind}"
+      }
+    },
+    "input_contract": {
+      "domain": {
+        "required": false,
+        "type": "string"
+      },
+      "kind": {
+        "required": false,
+        "type": "string"
+      }
+    },
+    "operation": "si.artifact.list",
+    "version": "v0"
+  },
+  "layer_code": "INSPECTION_TRANSPORT",
+  "module_path": "inspection.transport",
+  "namespace": "inspection",
+  "references": [
+    "fb.transport::CONSTITUTION_TRANSPORT_INGRESS_V0"
+  ],
+  "version": "0"
+}

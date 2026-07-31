@@ -1,0 +1,15 @@
+{
+  "attestation_hash": "3e29b4c039dc41cf63e55ca6deb5955428e4918c3d2c00587b823c4c89db1c65",
+  "attestation_version": "V0",
+  "imported_governance": {
+    "closure_member_count": 69,
+    "governance_closure_hash": "47d603fb25977a0543e8c22473adf6ed8c355a9355d7c325d41f115ebb30626c",
+    "import_domain": "platform"
+  },
+  "public_key_ref": "STUB",
+  "signature": "STUB_NOT_CRYPTOGRAPHICALLY_SIGNED",
+  "signed_at": "2026-07-31T13:07:18.441921+00:00",
+  "signing_algorithm": "STUB",
+  "structure_id": "inspection",
+  "tokenized_projection_hash": "a4a63305845adb78d4789b1d9c3573dd4142010cac716dc07de4b6c5247ae1cf"
+}

@@ -1,0 +1,139 @@
+{
+  "adjacency": {},
+  "edges": [],
+  "nodes": [
+    {
+      "address": 69,
+      "kind": 16646
+    },
+    {
+      "address": 70,
+      "kind": 16649
+    },
+    {
+      "address": 71,
+      "kind": 16649
+    },
+    {
+      "address": 72,
+      "kind": 16649
+    },
+    {
+      "address": 73,
+      "kind": 16649
+    },
+    {
+      "address": 74,
+      "kind": 16649
+    },
+    {
+      "address": 75,
+      "kind": 16649
+    },
+    {
+      "address": 76,
+      "kind": 16649
+    },
+    {
+      "address": 77,
+      "kind": 16649
+    },
+    {
+      "address": 78,
+      "kind": 16649
+    },
+    {
+      "address": 79,
+      "kind": 16649
+    },
+    {
+      "address": 80,
+      "kind": 16649
+    },
+    {
+      "address": 81,
+      "kind": 16649
+    },
+    {
+      "address": 82,
+      "kind": 16649
+    },
+    {
+      "address": 83,
+      "kind": 16649
+    },
+    {
+      "address": 84,
+      "kind": 16649
+    },
+    {
+      "address": 85,
+      "kind": 16649
+    },
+    {
+      "address": 86,
+      "kind": 16651
+    },
+    {
+      "address": 87,
+      "kind": 16651
+    },
+    {
+      "address": 88,
+      "kind": 16651
+    },
+    {
+      "address": 89,
+      "kind": 16651
+    },
+    {
+      "address": 90,
+      "kind": 16651
+    },
+    {
+      "address": 91,
+      "kind": 16651
+    },
+    {
+      "address": 92,
+      "kind": 16651
+    },
+    {
+      "address": 93,
+      "kind": 16651
+    },
+    {
+      "address": 94,
+      "kind": 16651
+    },
+    {
+      "address": 95,
+      "kind": 16651
+    },
+    {
+      "address": 96,
+      "kind": 16651
+    },
+    {
+      "address": 97,
+      "kind": 16651
+    },
+    {
+      "address": 98,
+      "kind": 16651
+    },
+    {
+      "address": 99,
+      "kind": 16651
+    },
+    {
+      "address": 100,
+      "kind": 16651
+    },
+    {
+      "address": 101,
+      "kind": 16651
+    }
+  ],
+  "projection_class": "machine_projection"
+}

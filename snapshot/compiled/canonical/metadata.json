@@ -1,0 +1,10 @@
+{
+  "compiler_version": "3",
+  "graph_address_hash": "a99093b5c807a01bb8a63a0669fc98f3e8bc154059b3bff6cb5a8bd655ab027b",
+  "graph_topology_hash": "a8891c510209dd102df63350b85c215888dfdbaeda3ae5f03bc6fb3fcc398664",
+  "projection_class": "canonical_artifact",
+  "projection_hash": "51b713fbce841bec0197afceb1d48fea731a7ed6244616624ce8c5988bf07158",
+  "projection_schema_version": "v0",
+  "projection_type": "canonical",
+  "requires_fqdn_identity": true
+}
