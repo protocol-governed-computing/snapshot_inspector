@@ -406,13 +406,47 @@ function escapeHtml(str) {
 
 const Catalog = { byIdentity: {} };
 
+function renderCatalogFailure(line, container, resultClass, message, guidance) {
+    line.textContent = 'catalog unavailable';
+    container.innerHTML =
+        '<div class="catalog-group catalog-failure">'
+        + '<span class="status-badge">' + escapeHtml(resultClass) + '</span>'
+        + '<h3>Inspection catalog unavailable</h3>'
+        + '<p class="failure-message">' + escapeHtml(message) + '</p>'
+        + '<pre class="failure-guidance">' + escapeHtml(guidance) + '</pre>'
+        + '</div>';
+}
+
 async function loadCatalog() {
     const line = document.getElementById('snapshot-line');
     const container = document.getElementById('catalog');
 
-    const envelope = await callOperation('si.catalog', {});
+    let envelope;
+    try {
+        envelope = await callOperation('si.catalog', {});
+    } catch (e) {
+        renderCatalogFailure(line, container, 'TRANSPORT ERROR', e.message,
+            'The boundary did not answer. Is the surface still running?');
+        return;
+    }
     if (envelope.result_class !== 'SUCCESS') {
-        line.textContent = 'catalog unavailable — ' + (envelope.errors[0] || {}).message;
+        // The catalog is the one call everything else depends on, so its failure must be the
+        // loudest thing on the page. Reporting it quietly leaves an empty launcher that reads as
+        // a broken client, and sends the reader looking in the wrong place entirely.
+        const error = envelope.errors && envelope.errors[0] ? envelope.errors[0] : {};
+        renderCatalogFailure(
+            line, container, envelope.result_class, error.message || 'no operations returned',
+            envelope.result_class === 'OPERATION_NOT_FOUND'
+                ? 'The snapshot THIS SERVER BOOTED WITH declares no inspection boundary.\n\n'
+                  + 'The boundary is read once, at startup — so if you have already rebuilt, the\n'
+                  + 'running process still holds the old one and only a restart will pick it up.\n'
+                  + 'Check the server banner: it prints the snapshot_id and operations it booted\n'
+                  + 'with.\n\n'
+                  + '  protocol_compiler/compile_domain.sh <workspace>/snapshot_inspector\n'
+                  + '  snapshot_assembler/assemble.sh\n'
+                  + '  # then restart the surface — re-assembling alone will not help\n'
+                  + '  snapshot_inspector/client/serve.sh'
+                : 'The snapshot could not answer for the operation catalog.');
         return;
     }
     const operations = envelope.result.operations;

@@ -1,10 +1,11 @@
 """`si` — the command-line client of `inspector.api`.
 
-**Generated from the catalog, not hand-written.** Every command, its arguments and its help text
-come from `registry.OPERATIONS`; there is no per-operation code here. That is deliberate: a CLI
-with hand-written commands accretes capability the API does not have — a flag that filters here, a
-join computed there — and becomes a second inspection engine with its own answers. Registering an
-operation is the only way to add a command, and it is then automatically present.
+**Generated from the SNAPSHOT, not hand-written.** Every command, its arguments and its help text
+come from the inspection contracts the snapshot declares; there is no per-operation code here.
+That is deliberate twice over: a CLI with hand-written commands accretes capability the API does
+not have and becomes a second inspection engine, and a CLI built from a private list would offer
+commands the snapshot in front of it never declared. Authoring a TI artifact is the only way to
+add a command, and it is then automatically present.
 
     si <group> <verb> [args]        one command per Operation Identity: si.artifact.show → si artifact show
     si operations                   the catalog itself
@@ -29,10 +30,25 @@ from pathlib import Path
 from typing import Any
 
 from inspector.api import query
-from inspector.registry import CATEGORIES, OPERATIONS, Operation
-from inspector.snapshot import SnapshotError
+from inspector.catalog import Operation, load_catalog
+from inspector.kinds import CATEGORIES
+from inspector.snapshot import Snapshot, SnapshotError
 
 _DEFAULT_SNAPSHOT = "snapshot"
+
+
+def _snapshot_root(argv: list[str]) -> Path:
+    """Resolve the snapshot BEFORE the parser exists.
+
+    The commands are generated from the snapshot's declared operations, so the snapshot has to be
+    located first — `--snapshot` is read by a deliberately minimal pre-pass rather than by the
+    parser it is needed to build. This is the one place the ordering is inverted, and it is
+    inverted because the protocol, not the code, decides what commands exist.
+    """
+    pre = argparse.ArgumentParser(add_help=False)
+    pre.add_argument("--snapshot", default=None)
+    known, _ = pre.parse_known_args(argv)
+    return Path(known.snapshot or os.environ.get("PGC_SNAPSHOT_ROOT") or _DEFAULT_SNAPSHOT)
 
 
 def _group_and_verb(identity: str) -> tuple[str, str]:
@@ -45,7 +61,8 @@ def _dest(param: str) -> str:
     return f"param_{param}"
 
 
-def _build_parser() -> tuple[argparse.ArgumentParser, dict[tuple[str, str], Operation]]:
+def _build_parser(operations: dict[str, Operation]
+                  ) -> tuple[argparse.ArgumentParser, dict[tuple[str, str], Operation]]:
     parser = argparse.ArgumentParser(
         prog="si",
         description="Read-only inspection of an assembled PGC snapshot.",
@@ -63,13 +80,44 @@ def _build_parser() -> tuple[argparse.ArgumentParser, dict[tuple[str, str], Oper
     common.add_argument("--json", action="store_true", default=argparse.SUPPRESS)
 
     by_group: dict[str, list[Operation]] = {}
-    for op in OPERATIONS.values():
+    for op in operations.values():
         by_group.setdefault(_group_and_verb(op.identity)[0], []).append(op)
+
+    def bind(parser: argparse.ArgumentParser, op: Operation) -> None:
+        """Give a parser this operation's declared parameters and bind it to the identity."""
+        for param in op.params:
+            if param in op.flags:
+                parser.add_argument(f"--{param}", dest=_dest(param), action="store_true")
+            elif param in op.required:
+                parser.add_argument(_dest(param), nargs="?", default=None, metavar=param.upper())
+            else:
+                parser.add_argument(f"--{param}", dest=_dest(param), default=None)
+        parser.set_defaults(_operation=op.identity)
 
     routes: dict[tuple[str, str], Operation] = {}
     order = {c: i for i, c in enumerate(CATEGORIES)}
     for group_name in sorted(by_group, key=lambda g: (order.get(by_group[g][0].category, 99), g)):
         ops = sorted(by_group[group_name], key=lambda o: o.identity)
+
+        # A two-segment identity (`si.catalog`) is a command in its own right; a three-segment one
+        # (`si.artifact.show`) is a verb under a group. The shape of the identity decides, so an
+        # operation named either way gets the command a reader would expect.
+        flat = [op for op in ops if not _group_and_verb(op.identity)[1]]
+        if flat:
+            if len(ops) > 1:
+                raise ValueError(
+                    f"identity group {group_name!r} mixes a bare command with verbs: "
+                    f"{[o.identity for o in ops]}"
+                )
+            op = flat[0]
+            command = groups.add_parser(group_name, help=op.summary, parents=[common],
+                                        description=(f"{op.summary}\n\n"
+                                                     f"Operation Identity: {op.identity}  ({op.kind})"),
+                                        formatter_class=argparse.RawDescriptionHelpFormatter)
+            bind(command, op)
+            routes[(group_name, "")] = op
+            continue
+
         group_parser = groups.add_parser(group_name, help=f"{ops[0].category.lower()} operations")
         verbs = group_parser.add_subparsers(dest="verb", metavar="<verb>")
         for op in ops:
@@ -77,15 +125,7 @@ def _build_parser() -> tuple[argparse.ArgumentParser, dict[tuple[str, str], Oper
             verb_parser = verbs.add_parser(verb, help=op.summary, parents=[common], description=(
                 f"{op.summary}\n\nOperation Identity: {op.identity}  ({op.kind})"
             ), formatter_class=argparse.RawDescriptionHelpFormatter)
-            for param in op.params:
-                if param in op.flags:
-                    verb_parser.add_argument(f"--{param}", dest=_dest(param), action="store_true")
-                elif param in op.required:
-                    verb_parser.add_argument(_dest(param), nargs="?", default=None,
-                                             metavar=param.upper())
-                else:
-                    verb_parser.add_argument(f"--{param}", dest=_dest(param), default=None)
-            verb_parser.set_defaults(_operation=op.identity)
+            bind(verb_parser, op)
             routes[(group_name, verb)] = op
 
     operations_parser = groups.add_parser(
@@ -148,22 +188,23 @@ def _render_table(rows: list[dict[str, Any]], pad: str) -> list[str]:
     return lines
 
 
-def _render_catalog() -> list[str]:
-    from inspector.api import operations
-
+def _render_catalog(operations: dict[str, Operation]) -> list[str]:
     lines = ["Protocol Inspection — read-only inspection of the PGC snapshot", ""]
-    by_category: dict[str, list[dict[str, Any]]] = {}
-    for op in operations():
-        by_category.setdefault(op["category"], []).append(op)
-    for category, ops in by_category.items():
+    by_category: dict[str, list[Operation]] = {}
+    for op in operations.values():
+        by_category.setdefault(op.category, []).append(op)
+    for category in CATEGORIES:
+        ops = by_category.get(category)
+        if not ops:
+            continue
         lines.append(f"  {category}")
         for op in ops:
-            group, verb = _group_and_verb(op["operation"])
+            group, verb = _group_and_verb(op.identity)
             params = " ".join(
-                f"<{p}>" if p in op["required"] else f"[--{p}]" for p in op["params"]
+                f"<{p}>" if p in op.required else f"[--{p}]" for p in op.params
             )
             lines.append(f"    si {group} {verb} {params}".rstrip())
-            lines.append(f"        {op['summary']}  [{op['kind']}]")
+            lines.append(f"        {op.summary}  [{op.kind}]")
         lines.append("")
     return lines
 
@@ -171,8 +212,20 @@ def _render_catalog() -> list[str]:
 # ── entry point ──────────────────────────────────────────────────
 
 def main(argv: list[str] | None = None) -> int:
-    parser, _ = _build_parser()
-    args = parser.parse_args(argv if argv is not None else sys.argv[1:])
+    argv = argv if argv is not None else sys.argv[1:]
+
+    # The snapshot declares the commands, so it is located first and read before the parser is
+    # built. A snapshot that declares no inspection contracts yields a usage error, not a partial
+    # CLI answering from a list the snapshot never agreed to.
+    root = _snapshot_root(argv)
+    try:
+        operations = load_catalog(Snapshot(root))
+    except SnapshotError as exc:
+        print(f"si: {exc}", file=sys.stderr)
+        return 2
+
+    parser, _ = _build_parser(operations)
+    args = parser.parse_args(argv)
 
     operation = getattr(args, "_operation", None)
     if operation is None:
@@ -180,14 +233,13 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     if operation == "__catalog__":
-        print("\n".join(_render_catalog()))
+        print("\n".join(_render_catalog(operations)))
         return 0
 
-    op = OPERATIONS[operation]
+    op = operations[operation]
     params = {p: getattr(args, _dest(p)) for p in op.params}
     params = {k: v for k, v in params.items() if v not in (None, False)}
 
-    root = Path(args.snapshot or os.environ.get("PGC_SNAPSHOT_ROOT") or _DEFAULT_SNAPSHOT)
     try:
         status, payload = query(operation, params, root)
     except SnapshotError as exc:

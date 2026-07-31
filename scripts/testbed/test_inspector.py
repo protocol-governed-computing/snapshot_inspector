@@ -10,13 +10,46 @@ namespace is not its snapshot directory, and an artifact published in two domain
 Run: PYTHONPATH=. python3 scripts/testbed/test_inspector.py
 """
 
+import importlib.util
 import json
 import sys
 import tempfile
 from pathlib import Path
 
 from inspector.api import operation_kind, operations, query
-from inspector.registry import CATEGORIES, OPERATIONS, SNAPSHOT_QUERY, SNAPSHOT_READ
+from inspector.kinds import CATEGORIES, SNAPSHOT_QUERY, SNAPSHOT_READ
+from inspector.registry import IMPLEMENTATIONS, implementation_ref
+
+# The fixture snapshot DECLARES its operations, because that is where the operation set now lives.
+# Contracts are built from the repo's authoring specs — the same declaration the real artifacts are
+# generated from — so a test snapshot offers exactly what this repo authors, and the catalog under
+# test is genuinely read from the snapshot rather than from a Python table.
+_AUTHORING = importlib.util.spec_from_file_location(
+    "author_transport_contracts",
+    Path(__file__).resolve().parent.parent / "author_transport_contracts.py",
+)
+_authoring = importlib.util.module_from_spec(_AUTHORING)
+sys.modules[_AUTHORING.name] = _authoring   # dataclasses resolve annotations via sys.modules
+_AUTHORING.loader.exec_module(_authoring)
+SPECS = _authoring.SPECS
+
+
+def _ti_frontmatter(operation: str, spec) -> dict:
+    """The compiled TI shape the catalog reads — the fields, not the markdown around them."""
+    module, callable_name = implementation_ref(spec.handler).split(":")
+    return {
+        "operation": operation,
+        "input_contract": {
+            name: {"type": param_type, "required": required}
+            for name, (param_type, required) in spec.params.items()
+        },
+        "catalog": {"category": spec.category, "label": spec.label, "summary": spec.summary},
+        "handler": {
+            "kind": spec.kind,
+            "operation": operation,
+            "implementation": {"module": module, "callable": callable_name},
+        },
+    }
 
 PASS = 0
 FAIL = 0
@@ -74,6 +107,12 @@ _GRAPH = {
 }
 
 
+# The fixture's own artifacts, plus one TI per declared operation — the snapshot must carry the
+# contracts it offers, so the boundary is part of the composition rather than a fact about the code.
+FIXTURE_OWN_ARTIFACTS = 5
+FIXTURE_ARTIFACTS = FIXTURE_OWN_ARTIFACTS + len(SPECS)
+
+
 def _fixture(root: Path) -> None:
     paths = {
         "d::WF_X_V0": ("canonical/d/workflows/d__WF_X_V0.json", _WF),
@@ -97,6 +136,18 @@ def _fixture(root: Path) -> None:
     # vocabulary are two views of one fact, and a fixture that lets them disagree is testing
     # against a snapshot the assembler could not have produced.
     addresses = {"d::WF_X_V0": {"d": "0x0001"}}
+    # The inspection boundary the fixture snapshot declares. Without these the snapshot offers no
+    # operations at all — which is the behaviour the inversion introduces, and is asserted below.
+    for operation, spec in SPECS.items():
+        code = "TI_" + operation.replace(".", "_").upper() + "_V0"
+        fqdn = f"inspection::{code}"
+        rel = f"canonical/inspection/transport/inspection__{code}.json"
+        _write(root, rel, {
+            "fqdn_id": fqdn, "artifact_type": "TI",
+            "frontmatter": _ti_frontmatter(operation, spec),
+        })
+        paths[fqdn] = (rel, {"artifact_type": "TI"})
+
     _write(root, "artifact_index/index.json", {
         "schema_version": "v0", "artifact_count": len(paths),
         "artifacts": {
@@ -167,14 +218,71 @@ def test_api_contract() -> None:
         status, _ = query("si.artifact.list", {}, root)
         check("api_optional_params_omitted_ok", status == "SUCCESS")
 
-        check("api_operation_kind_read", operation_kind("si.artifact.show") == SNAPSHOT_READ)
-        check("api_operation_kind_query", operation_kind("si.topology.impact") == SNAPSHOT_QUERY)
+        check("api_operation_kind_read", operation_kind("si.artifact.show", root) == SNAPSHOT_READ)
+        check("api_operation_kind_query", operation_kind("si.topology.impact", root) == SNAPSHOT_QUERY)
+
+
+def test_operation_set_comes_from_the_snapshot() -> None:
+    """The protocol declares which operations exist; the code only obeys.
+
+    These are the checks that would fail if the operation set drifted back into Python — the point
+    of the binding inversion, pinned so it cannot quietly regress.
+    """
+    from inspector.catalog import load_catalog
+    from inspector.snapshot import Snapshot, SnapshotError
+
+    with Fixture() as root:
+        # Removing a contract removes the operation. If the catalog were a Python table, the
+        # operation would survive its own contract's deletion.
+        code = "TI_" + "si.artifact.show".replace(".", "_").upper() + "_V0"
+        (root / f"canonical/inspection/transport/inspection__{code}.json").unlink()
+        index = json.loads((root / "artifact_index/index.json").read_text())
+        del index["artifacts"][f"inspection::{code}"]
+        _write(root, "artifact_index/index.json", index)
+
+        declared = load_catalog(Snapshot(root))
+        check("undeclared_operation_absent_from_catalog", "si.artifact.show" not in declared)
+        try:
+            query("si.artifact.show", {"artifact": "d::WF_X_V0"}, root)
+            check("undeclared_operation_unanswerable", False, "answered anyway")
+        except KeyError:
+            check("undeclared_operation_unanswerable", True)
+
+    with Fixture() as root:
+        # An implementation the registry does not import cannot be named by an artifact.
+        code = "TI_SI_ARTIFACT_SHOW_V0"
+        path = root / f"canonical/inspection/transport/inspection__{code}.json"
+        doc = json.loads(path.read_text())
+        doc["frontmatter"]["handler"]["implementation"]["callable"] = "not_a_real_projection"
+        path.write_text(json.dumps(doc), encoding="utf-8")
+        try:
+            load_catalog(Snapshot(root))
+            check("unregistered_implementation_fails_hard", False, "resolved anyway")
+        except KeyError:
+            check("unregistered_implementation_fails_hard", True)
+
+    with Fixture() as root:
+        # A snapshot declaring no inspection contracts offers nothing — it does not fall back to
+        # whatever the code happens to know.
+        for contract in (root / "canonical/inspection/transport").glob("*.json"):
+            contract.unlink()
+        index = json.loads((root / "artifact_index/index.json").read_text())
+        index["artifacts"] = {k: v for k, v in index["artifacts"].items() if v["kind"] != "TI"}
+        _write(root, "artifact_index/index.json", index)
+        try:
+            load_catalog(Snapshot(root))
+            check("no_contracts_means_no_operations", False, "offered operations anyway")
+        except SnapshotError:
+            check("no_contracts_means_no_operations", True)
 
 
 def test_catalog() -> None:
-    catalog = operations()
-    check("catalog_covers_registry", len(catalog) == len(OPERATIONS))
-    check("catalog_identities_match", {c["operation"] for c in catalog} == set(OPERATIONS))
+  with Fixture() as root:
+    catalog = operations(root)
+    check("catalog_covers_declarations", len(catalog) == len(SPECS))
+    check("catalog_identities_match", {c["operation"] for c in catalog} == set(SPECS))
+    check("catalog_declares_implementation",
+          all(c["implementation"] in IMPLEMENTATIONS for c in catalog))
     check("catalog_kinds_valid", all(c["kind"] in (SNAPSHOT_READ, SNAPSHOT_QUERY) for c in catalog))
     check("catalog_categories_declared", {c["category"] for c in catalog} <= set(CATEGORIES))
     check("catalog_grouped", [c["category"] for c in catalog] ==
@@ -182,6 +290,8 @@ def test_catalog() -> None:
     check("catalog_required_subset_of_params",
           all(set(c["required"]) <= set(c["params"]) for c in catalog))
     check("catalog_every_op_summarized", all(c["summary"] and c["label"] for c in catalog))
+    check("catalog_flags_derived_from_type",
+          all(set(c["flags"]) <= set(c["params"]) for c in catalog))
 
 
 # ── reads ────────────────────────────────────────────────────────
@@ -208,7 +318,11 @@ def test_artifact_show() -> None:
 def test_artifact_list() -> None:
     with Fixture() as root:
         _, all_of_them = query("si.artifact.list", {}, root)
-        check("list_all", all_of_them["artifact_count"] == 5)
+        check("list_all", all_of_them["artifact_count"] == FIXTURE_ARTIFACTS,
+              str(all_of_them["artifact_count"]))
+
+        _, contracts = query("si.artifact.list", {"kind": "TI"}, root)
+        check("list_includes_declared_contracts", contracts["artifact_count"] == len(SPECS))
 
         _, filtered = query("si.artifact.list", {"kind": "WF"}, root)
         check("list_filter_kind", filtered["artifact_count"] == 1)
@@ -272,7 +386,7 @@ def test_snapshot_reads() -> None:
     with Fixture() as root:
         status, payload = query("si.snapshot.summary", {}, root)
         check("summary_identity", status == "SUCCESS" and payload["snapshot_id"] == "abc123")
-        check("summary_counts_from_index", payload["artifact_count"] == 5)
+        check("summary_counts_from_index", payload["artifact_count"] == FIXTURE_ARTIFACTS)
         check("summary_by_kind", payload["artifacts_by_kind"]["WF"] == 1)
         check("summary_stores", payload["store_count"] == 1)
 
@@ -432,7 +546,7 @@ def test_cli() -> None:
         code, out = _cli(["operations"], root)
         check("cli_catalog_exit0", code == 0)
         check("cli_catalog_lists_every_operation",
-              all(op.identity.split(".", 1)[1].split(".")[0] in out for op in OPERATIONS.values()))
+              all(identity.split(".", 1)[1].split(".")[0] in out for identity in SPECS))
 
         code, out = _cli(["artifact", "show", "d::WF_X_V0"], root)
         check("cli_show_exit0", code == 0)
@@ -472,17 +586,22 @@ def test_cli_is_generated_from_catalog() -> None:
     The CLI must not carry commands the API cannot answer: that is how a client becomes a second
     inspection engine with answers of its own.
     """
+    from inspector.catalog import load_catalog
     from inspector.cli import _build_parser
+    from inspector.snapshot import Snapshot
 
-    _, routes = _build_parser()
-    check("cli_covers_every_operation",
-          {op.identity for op in routes.values()} == set(OPERATIONS))
-    check("cli_adds_no_commands", len(routes) == len(OPERATIONS))
+    with Fixture() as root:
+        declared = load_catalog(Snapshot(root))
+        _, routes = _build_parser(declared)
+        check("cli_covers_every_declared_operation",
+              {op.identity for op in routes.values()} == set(declared))
+        check("cli_adds_no_commands", len(routes) == len(declared))
 
 
 def main() -> None:
     for test in (
         test_api_contract,
+        test_operation_set_comes_from_the_snapshot,
         test_catalog,
         test_artifact_show,
         test_artifact_list,

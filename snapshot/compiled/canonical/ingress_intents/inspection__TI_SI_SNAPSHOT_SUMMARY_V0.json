@@ -1,15 +1,24 @@
 {
   "artifact_code": "TI_SI_SNAPSHOT_SUMMARY_V0",
   "artifact_type": "TI",
-  "content": "# TI_SI_SNAPSHOT_SUMMARY_V0\n\n**Kind:** Transport Ingress Contract (Transport Standard V0 \u00a76)\n**Operation Identity:** `si.snapshot.summary`\n\nDeclares the admission semantics for `si.snapshot.summary`: its input contract, the handler it binds to,\nand how the canonical input maps onto that handler.\n\n`handler.kind: SNAPSHOT_READ` selects the inspector's static entry point rather than the runtime's.\nThe engine routes by KIND and stops there \u2014 the inspector resolves `handler.operation` through\nits own internal registry. No resolver or adapter code interprets the operation string; one that\ndid would be a hidden RPC router.\n\nEach `si.` operation carries its own TI/TE pair. The family shares one HTTP route, but sharing a\nroute is a protocol convenience; sharing a governed identity would leave the boundary unable to\nadmit one operation and refuse another.\n\n## Machine\n\n```yaml\nfqdn: inspection::TI_SI_SNAPSHOT_SUMMARY_V0\nartifact_kind: TRANSPORT_INGRESS\nversion: v0\ngoverned_by: fb.transport::CONSTITUTION_TRANSPORT_INGRESS_V0\noperation: si.snapshot.summary\n\n# Input contract \u2014 declared and enforced at the boundary before the handler is reached.\ninput_contract:\n  {}\n\n# Context requirements \u2014 inert in V0 (AC reserved).\ncontext_requirements: []\n\nhandler:\n  kind: SNAPSHOT_READ\n  operation: si.snapshot.summary\n  payload_template:\n    {}\n```\n",
-  "content_hash": "c0f7f0b553dbbb8be51ccd0cd7f4051997e2067be6f08fe72affb0eec099a6da",
+  "content": "# TI_SI_SNAPSHOT_SUMMARY_V0\n\n**Kind:** Transport Ingress Contract (Transport Standard V0 \u00a76)\n**Operation Identity:** `si.snapshot.summary`\n\nDeclares `si.snapshot.summary` in full: what it admits, how it is presented, and which implementation\nanswers it. This artifact is the **authority** \u2014 `inspector.catalog` reads the operation set from\nthe compiled contracts, and `inspector.registry` holds implementations and no metadata. Adding,\nrenaming or re-pointing an operation is an authoring act here, sealed into the snapshot and\nattested; it cannot happen silently in code.\n\n`handler.kind: SNAPSHOT_READ` selects the inspector's static entry point rather than the runtime's.\nThe engine routes by KIND and stops there \u2014 the inspector resolves the declared implementation\ninternally. No resolver or adapter code interprets the operation string; one that did would be a\nhidden RPC router.\n\n`handler.implementation` is the same binding a capability transform declares: the artifact names\n`{module, callable}` and the inspector resolves it against a closed, statically imported\nregistry. An implementation the registry does not import cannot be named here.\n\nEach `si.` operation carries its own TI/TE pair. The family shares one HTTP route, but sharing a\nroute is a protocol convenience; sharing a governed identity would leave the boundary unable to\nadmit one operation and refuse another.\n\n## Machine\n\n```yaml\nfqdn: inspection::TI_SI_SNAPSHOT_SUMMARY_V0\nartifact_kind: TRANSPORT_INGRESS\nversion: v0\ngoverned_by: fb.transport::CONSTITUTION_TRANSPORT_INGRESS_V0\noperation: si.snapshot.summary\n\n# Input contract \u2014 declared and enforced at the boundary before the handler is reached.\n# A parameter declared `type: boolean` is what a client renders as a switch; `flags` is derived\n# from the contract, never stated twice.\ninput_contract:\n  {}\n\n# Presentation \u2014 the published catalog a client builds its menu from.\ncatalog:\n  category: SNAPSHOT\n  label: Summary\n  summary: Composition identity, domains, and published counts by kind.\n\n# Context requirements \u2014 inert in V0 (AC reserved).\ncontext_requirements: []\n\nhandler:\n  kind: SNAPSHOT_READ\n  operation: si.snapshot.summary\n  implementation:\n    module: inspector.reads.snapshot_summary\n    callable: snapshot_summary\n  payload_template:\n    {}\n```\n",
+  "content_hash": "c702cb3a57a3c79489d600060bec920f7c94246b6b95741fe045cc0c7d2e2336",
   "fqdn_id": "inspection::TI_SI_SNAPSHOT_SUMMARY_V0",
   "frontmatter": {
     "artifact_kind": "TRANSPORT_INGRESS",
+    "catalog": {
+      "category": "SNAPSHOT",
+      "label": "Summary",
+      "summary": "Composition identity, domains, and published counts by kind."
+    },
     "context_requirements": [],
     "fqdn": "inspection::TI_SI_SNAPSHOT_SUMMARY_V0",
     "governed_by": "fb.transport::CONSTITUTION_TRANSPORT_INGRESS_V0",
     "handler": {
+      "implementation": {
+        "callable": "snapshot_summary",
+        "module": "inspector.reads.snapshot_summary"
+      },
       "kind": "SNAPSHOT_READ",
       "operation": "si.snapshot.summary",
       "payload_template": {}

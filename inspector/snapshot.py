@@ -57,6 +57,15 @@ class Snapshot:
     def has(self, rel: str) -> bool:
         return (self.root / rel).is_file()
 
+    def cached(self, key: str) -> Any:
+        """Whatever was memoized under `key` for this instance, or None."""
+        return self._cache.get(key)
+
+    def cache(self, key: str, value: Any) -> Any:
+        """Memoize a derived read (e.g. the parsed operation catalog) for this instance."""
+        self._cache[key] = value
+        return value
+
     # ── composition ──────────────────────────────────────────────
 
     def manifest(self) -> dict[str, Any]:

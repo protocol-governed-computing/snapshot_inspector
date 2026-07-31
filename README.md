@@ -39,8 +39,10 @@ status, payload = query(
 Callers pass an **Operation Identity**; the inspector resolves it internally (never an RPC of
 projection functions). See `CLAUDE.md` for the architectural rules.
 
-`operations()` publishes the catalog — every operation with its handler kind, category, parameters
-and summary. A client's menu is generated from it, so there is no second list to keep in step.
+`operations(snapshot_root)` publishes the catalog — every operation with its handler kind,
+category, parameters, summary and declared implementation. **It is read from the snapshot's
+`inspection::` TI artifacts**, so a client's menu is what that snapshot offers, not what the code
+privately believes. There is no second list anywhere.
 
 ## Operations
 
@@ -119,11 +121,15 @@ composed into the snapshot like any other domain. A **tool domain** declares cap
 a snapshot rather than within one; it consumes the assembled snapshot as the runtime does, which
 makes it a peer of the runtime, not part of the normative platform.
 
-The contracts are generated from the registry — `PYTHONPATH=. python3
-scripts/author_transport_contracts.py` — because thirty near-identical hand-authored artifacts
-would drift from the API they describe. The fields each operation exposes are declared in that
-script, not read off a live answer: a TE states what the boundary exposes, and a contract derived
-from the implementation could never disagree with it.
+**The contracts are the authority.** Each TI declares its operation's identity, kind, input
+contract, presentation and — as a capability transform does — the `{module, callable}` that
+answers it. `inspector.registry` holds implementations and no metadata; the operation set comes
+from the snapshot.
+
+`scripts/author_transport_contracts.py` is the authoring aid that writes the `.md` artifacts from
+one complete declaration per operation. Nothing consults it at run time: delete it and the
+inspector keeps working from the compiled contracts. Re-run it, then recompile the domain, after
+changing any declaration.
 
 ## Run (standalone)
 

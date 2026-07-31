@@ -1,28 +1,42 @@
-"""si.catalog — the inspection vocabulary itself: every operation this inspector answers.
+"""si.catalog — the inspection vocabulary itself: every operation this snapshot declares.
 
-A client needs to know what can be asked before it can ask anything. Publishing the catalog as an
-operation means the menu a surface renders is DERIVED from the registry that answers it — a client
-that hardcoded the list would hold a second copy of the registry, and the two would part company
-the first time an operation was added or renamed.
+A client needs to know what can be asked before it can ask anything. The catalog is read from the
+snapshot's compiled `inspection::` TI artifacts, so a surface's menu and a CLI's commands are
+generated from the same contracts that admit the requests. There is no second list anywhere.
 
-It is a READ: the registry is published material, not a derivation over snapshot state. Note that
-it is the one operation whose answer does not depend on the snapshot — the vocabulary is a property
-of the inspector, not of what it is pointed at.
+It is a READ: the contracts are published snapshot material, not a derivation over snapshot state.
+Unlike every other operation it describes the snapshot's *boundary* rather than its contents —
+which is exactly why it can be answered before anything else is known.
 """
 from __future__ import annotations
 
 from typing import Any
 
+from inspector.kinds import CATEGORIES
 from inspector.snapshot import Snapshot
 
 
 def catalog(snapshot: Snapshot, params: dict[str, Any]) -> tuple[str, dict[str, Any]]:
-    from inspector.api import operations
+    from inspector.catalog import load_catalog
 
-    published = operations()
+    operations = load_catalog(snapshot)
+    published = [
+        {
+            "operation": op.identity,
+            "kind": op.kind,
+            "category": op.category,
+            "label": op.label,
+            "params": list(op.params),
+            "required": list(op.required),
+            "flags": list(op.flags),
+            "summary": op.summary,
+            "implementation": op.implementation,
+        }
+        for op in operations.values()
+    ]
+    present = {op["category"] for op in published}
     return "SUCCESS", {
         "operation_count": len(published),
-        "categories": sorted({op["category"] for op in published},
-                             key=[op["category"] for op in published].index),
+        "categories": [c for c in CATEGORIES if c in present],
         "operations": published,
     }

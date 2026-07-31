@@ -1,15 +1,24 @@
 {
   "artifact_code": "TI_SI_BEHAVIOR_LOGIC_LIST_V0",
   "artifact_type": "TI",
-  "content": "# TI_SI_BEHAVIOR_LOGIC_LIST_V0\n\n**Kind:** Transport Ingress Contract (Transport Standard V0 \u00a76)\n**Operation Identity:** `si.behavior_logic.list`\n\nDeclares the admission semantics for `si.behavior_logic.list`: its input contract, the handler it binds to,\nand how the canonical input maps onto that handler.\n\n`handler.kind: SNAPSHOT_READ` selects the inspector's static entry point rather than the runtime's.\nThe engine routes by KIND and stops there \u2014 the inspector resolves `handler.operation` through\nits own internal registry. No resolver or adapter code interprets the operation string; one that\ndid would be a hidden RPC router.\n\nEach `si.` operation carries its own TI/TE pair. The family shares one HTTP route, but sharing a\nroute is a protocol convenience; sharing a governed identity would leave the boundary unable to\nadmit one operation and refuse another.\n\n## Machine\n\n```yaml\nfqdn: inspection::TI_SI_BEHAVIOR_LOGIC_LIST_V0\nartifact_kind: TRANSPORT_INGRESS\nversion: v0\ngoverned_by: fb.transport::CONSTITUTION_TRANSPORT_INGRESS_V0\noperation: si.behavior_logic.list\n\n# Input contract \u2014 declared and enforced at the boundary before the handler is reached.\ninput_contract:\n  {}\n\n# Context requirements \u2014 inert in V0 (AC reserved).\ncontext_requirements: []\n\nhandler:\n  kind: SNAPSHOT_READ\n  operation: si.behavior_logic.list\n  payload_template:\n    {}\n```\n",
-  "content_hash": "47906bb6ecedd34ebe671eddd96ba257ede6a5eca54f2a7fafb51fdb33bc4f46",
+  "content": "# TI_SI_BEHAVIOR_LOGIC_LIST_V0\n\n**Kind:** Transport Ingress Contract (Transport Standard V0 \u00a76)\n**Operation Identity:** `si.behavior_logic.list`\n\nDeclares `si.behavior_logic.list` in full: what it admits, how it is presented, and which implementation\nanswers it. This artifact is the **authority** \u2014 `inspector.catalog` reads the operation set from\nthe compiled contracts, and `inspector.registry` holds implementations and no metadata. Adding,\nrenaming or re-pointing an operation is an authoring act here, sealed into the snapshot and\nattested; it cannot happen silently in code.\n\n`handler.kind: SNAPSHOT_READ` selects the inspector's static entry point rather than the runtime's.\nThe engine routes by KIND and stops there \u2014 the inspector resolves the declared implementation\ninternally. No resolver or adapter code interprets the operation string; one that did would be a\nhidden RPC router.\n\n`handler.implementation` is the same binding a capability transform declares: the artifact names\n`{module, callable}` and the inspector resolves it against a closed, statically imported\nregistry. An implementation the registry does not import cannot be named here.\n\nEach `si.` operation carries its own TI/TE pair. The family shares one HTTP route, but sharing a\nroute is a protocol convenience; sharing a governed identity would leave the boundary unable to\nadmit one operation and refuse another.\n\n## Machine\n\n```yaml\nfqdn: inspection::TI_SI_BEHAVIOR_LOGIC_LIST_V0\nartifact_kind: TRANSPORT_INGRESS\nversion: v0\ngoverned_by: fb.transport::CONSTITUTION_TRANSPORT_INGRESS_V0\noperation: si.behavior_logic.list\n\n# Input contract \u2014 declared and enforced at the boundary before the handler is reached.\n# A parameter declared `type: boolean` is what a client renders as a switch; `flags` is derived\n# from the contract, never stated twice.\ninput_contract:\n  {}\n\n# Presentation \u2014 the published catalog a client builds its menu from.\ncatalog:\n  category: BEHAVIOR\n  label: Workflows\n  summary: Every workflow carrying a published behavior-logic graph.\n\n# Context requirements \u2014 inert in V0 (AC reserved).\ncontext_requirements: []\n\nhandler:\n  kind: SNAPSHOT_READ\n  operation: si.behavior_logic.list\n  implementation:\n    module: inspector.reads.behavior_logic_list\n    callable: behavior_logic_list\n  payload_template:\n    {}\n```\n",
+  "content_hash": "54df7ae925674acaa5dbe78a8ed362a63bb569269b72a35ded4e191d29873d9e",
   "fqdn_id": "inspection::TI_SI_BEHAVIOR_LOGIC_LIST_V0",
   "frontmatter": {
     "artifact_kind": "TRANSPORT_INGRESS",
+    "catalog": {
+      "category": "BEHAVIOR",
+      "label": "Workflows",
+      "summary": "Every workflow carrying a published behavior-logic graph."
+    },
     "context_requirements": [],
     "fqdn": "inspection::TI_SI_BEHAVIOR_LOGIC_LIST_V0",
     "governed_by": "fb.transport::CONSTITUTION_TRANSPORT_INGRESS_V0",
     "handler": {
+      "implementation": {
+        "callable": "behavior_logic_list",
+        "module": "inspector.reads.behavior_logic_list"
+      },
       "kind": "SNAPSHOT_READ",
       "operation": "si.behavior_logic.list",
       "payload_template": {}

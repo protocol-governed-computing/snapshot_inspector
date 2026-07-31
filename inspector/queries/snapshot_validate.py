@@ -159,7 +159,22 @@ def snapshot_validate(snapshot: Snapshot, params: dict[str, Any]) -> tuple[str, 
                 undeclared.append({"rb": fqdn, "cs": cs_fqdn, "path": stripped})
     checks.append(_check("bound_paths_declared_as_stores", bound, undeclared, advisory=True))
 
-    # 8. The composition-conformance verdict, as the assembler recorded it. Read, never re-run.
+    # 8. The inspection boundary agrees with the code that serves it. The contracts are the
+    #    authority for what exists, so an implementation no contract names is unreachable code —
+    #    it cannot be invoked through any boundary, and its presence means the registry and the
+    #    snapshot have drifted apart.
+    from inspector.catalog import load_catalog
+    from inspector.registry import IMPLEMENTATIONS
+
+    declared = {op.implementation for op in load_catalog(snapshot).values()}
+    unreachable = sorted(set(IMPLEMENTATIONS) - declared)
+    checks.append(_check(
+        "inspection_implementations_declared",
+        len(IMPLEMENTATIONS),
+        [{"implementation": ref, "reason": "no inspection contract names it"} for ref in unreachable],
+    ))
+
+    # 9. The composition-conformance verdict, as the assembler recorded it. Read, never re-run.
     #    A recorded PASSED is only worth reading if it covered something and belongs to THIS
     #    composition: evidence carrying an older snapshot_id is a verdict about a different
     #    snapshot, and a verdict over zero rules is the vacuity the phase exists to prevent.
