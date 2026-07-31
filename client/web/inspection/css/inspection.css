@@ -1,0 +1,137 @@
+/* inspection.css — the Protocol Inspection Surface.
+   Extends the shared platform theme (base.css); adds the launcher catalog and the window manager. */
+
+.surface-body { min-height: 100vh; }
+
+/* ── Launcher ─────────────────────────────────────────────────── */
+.launcher { max-width: 1080px; margin: 32px auto 8px; padding: 0 20px; }
+.launcher-head { text-align: center; margin-bottom: 22px; }
+.launcher-head h2 { color: #0b1e3c; font-size: 24px; margin-bottom: 10px; }
+.launcher-sub { color: #64748b; font-size: 15px; line-height: 1.6; max-width: 720px; margin: 0 auto; }
+.snapshot-line {
+    margin-top: 12px; font-family: 'Courier New', monospace; font-size: 12px; color: #475569;
+}
+.snapshot-line .sid { color: #0b1e3c; }
+
+.catalog { display: flex; flex-direction: column; gap: 16px; margin-bottom: 40px; }
+.catalog-group {
+    background: #fff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,.08); padding: 18px 22px;
+}
+.catalog-group h3 {
+    font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #0b1e3c;
+    margin-bottom: 12px; border-bottom: 2px solid #d4af37; display: inline-block; padding-bottom: 3px;
+}
+.catalog-ops { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+.op-button {
+    text-align: left; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;
+    padding: 10px 12px; cursor: pointer; font-family: inherit; transition: border-color .15s, box-shadow .15s, transform .1s;
+}
+.op-button:hover { border-color: #0b1e3c; box-shadow: 0 3px 10px rgba(0,0,0,.09); transform: translateY(-1px); }
+.op-button .op-label { display: block; font-weight: bold; font-size: 14px; color: #0b1e3c; }
+.op-button .op-id { display: block; font-family: 'Courier New', monospace; font-size: 11px; color: #64748b; margin-top: 2px; }
+.op-button .op-summary { display: block; font-size: 12px; color: #64748b; margin-top: 6px; line-height: 1.4; }
+.kind-chip {
+    float: right; font-size: 9px; font-weight: bold; letter-spacing: .5px; padding: 2px 6px;
+    border-radius: 8px; text-transform: uppercase;
+}
+.kind-chip.read  { background: #e0f2fe; color: #075985; }
+.kind-chip.query { background: #fef3c7; color: #92400e; }
+
+/* A failed catalog is the loudest thing on the page: nothing else can work without it, and a
+   quiet failure leaves an empty launcher that reads as a broken client. */
+.catalog-failure { border-left: 4px solid #991b1b; }
+.catalog-failure .status-badge {
+    display: inline-block; background: #991b1b; color: #fff; font-size: 11px; font-weight: bold;
+    padding: 3px 10px; border-radius: 12px; letter-spacing: .5px;
+}
+.catalog-failure h3 { border: none; text-transform: none; letter-spacing: 0; font-size: 16px;
+    color: #0b1e3c; margin: 10px 0 6px; display: block; }
+.catalog-failure .failure-message { color: #000; font-size: 14px; margin-bottom: 10px; }
+.catalog-failure .failure-guidance {
+    background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; padding: 10px;
+    font-family: 'Courier New', monospace; font-size: 12px; color: #000; white-space: pre-wrap;
+}
+
+/* ── Window manager ───────────────────────────────────────────── */
+.window-layer { position: absolute; top: 0; left: 0; width: 100%; height: 0; }
+
+.win {
+    position: absolute; width: 520px; background: #fff; border-radius: 8px;
+    box-shadow: 0 10px 34px rgba(11,30,60,.24); display: flex; flex-direction: column;
+    max-height: 74vh; border: 1px solid #cbd5e1;
+}
+.win.focused { box-shadow: 0 14px 44px rgba(11,30,60,.34); border-color: #0b1e3c; }
+.win-title {
+    display: flex; align-items: center; gap: 8px; padding: 9px 12px; cursor: move;
+    background: #0b1e3c; color: #fff; border-radius: 7px 7px 0 0; user-select: none;
+}
+.win-title .t-label { font-weight: bold; font-size: 13px; }
+.win-title .t-id { font-family: 'Courier New', monospace; font-size: 11px; color: #94a3b8; flex: 1; }
+.win-title button {
+    background: transparent; border: none; color: #94a3b8; font-size: 16px; line-height: 1;
+    cursor: pointer; padding: 0 4px;
+}
+.win-title button:hover { color: #d4af37; }
+
+.win-body { padding: 14px; overflow: auto; color: #000; }
+.win-params { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; margin-bottom: 10px; }
+.win-params .p-field { display: flex; flex-direction: column; gap: 3px; }
+.win-params label { font-size: 11px; font-weight: bold; color: #475569; }
+.win-params label .req { color: #b91c1c; }
+.win-params input[type=text] {
+    padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px;
+    font-family: 'Courier New', monospace; background: #fafbfc; min-width: 200px;
+}
+.win-params input[type=text]:focus { outline: none; border-color: #0b1e3c; background: #fff; }
+.win-params .p-flag { display: flex; align-items: center; gap: 5px; font-size: 12px; color: #334155; padding-bottom: 6px; }
+.win-run {
+    padding: 7px 16px; background: #0b1e3c; color: #fff; border: none; border-radius: 4px;
+    font-size: 13px; font-weight: bold; cursor: pointer;
+}
+.win-run:hover { background: #123066; }
+.win-run:disabled { background: #94a3b8; cursor: not-allowed; }
+
+.win-status { font-size: 11px; margin: 4px 0 10px; font-family: 'Courier New', monospace; }
+.win-status .rc {
+    display: inline-block; padding: 2px 8px; border-radius: 10px; font-weight: bold; color: #fff;
+}
+.win-status .rc.ok   { background: #166534; }
+.win-status .rc.warn { background: #92400e; }
+.win-status .rc.err  { background: #991b1b; }
+.win-status .meta { color: #475569; margin-left: 8px; }
+
+/* ── Result rendering ─────────────────────────────────────────────
+   Result VALUES are black. This is inspection output being read closely, often for a long time,
+   so legibility beats syntax colouring: only structural furniture (keys, counts, headers) is
+   tinted, and never lighter than mid-slate. */
+.tree { font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.55; color: #000; }
+.tree details { margin-left: 10px; }
+.tree summary { cursor: pointer; color: #0b1e3c; font-weight: bold; }
+.tree summary:hover { color: #92400e; }
+.tree .k { color: #4c1d95; font-weight: bold; }
+.tree .s { color: #000; }
+.tree .n { color: #000; }
+.tree .b { color: #000; font-weight: bold; }
+.tree .null { color: #475569; font-style: italic; }
+.tree .row { margin-left: 10px; white-space: pre-wrap; word-break: break-word; color: #000; }
+.tree .count { color: #475569; }
+
+.res-table { border-collapse: collapse; width: 100%; font-size: 12px; margin-left: 4px; }
+.res-table th {
+    text-align: left; font-size: 10px; letter-spacing: .4px; text-transform: uppercase;
+    color: #334155; border-bottom: 1px solid #cbd5e1; padding: 4px 8px 4px 0;
+}
+.res-table td {
+    padding: 3px 8px 3px 0; border-bottom: 1px solid #f1f5f9; font-family: 'Courier New', monospace;
+    color: #000; vertical-align: top; word-break: break-all;
+}
+.linkish { color: #0b1e3c; cursor: pointer; text-decoration: underline dotted; }
+.linkish:hover { color: #92400e; }
+
+.bl-img { max-width: 100%; margin-top: 8px; border: 1px solid #e2e8f0; border-radius: 4px; }
+.err-box { background: #fef2f2; border: 1px solid #fca5a5; border-radius: 6px; padding: 10px; font-size: 13px; }
+.err-box .code { font-weight: bold; color: #991b1b; font-family: 'Courier New', monospace; }
+
+@media (max-width: 720px) {
+    .win { width: calc(100vw - 24px); }
+}

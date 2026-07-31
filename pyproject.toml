@@ -27,6 +27,9 @@ classifiers = [
   "Operating System :: OS Independent"
 ]
 
+[project.scripts]
+si = "inspector.cli:main"
+
 [project.urls]
 Repository = "https://github.com/protocol-governed-computing/snapshot_inspector"
 

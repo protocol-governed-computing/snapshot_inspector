@@ -14,9 +14,17 @@ from inspector.snapshot import Snapshot
 def artifact_show(snapshot: Snapshot, params: dict[str, Any]) -> tuple[str, dict[str, Any]]:
     fqdn = str(params.get("artifact", ""))
     if "::" not in fqdn:
-        return "NOT_FOUND", {"artifact": fqdn, "reason": "expected a <domain>::<CODE> FQDN"}
-    domain, code = fqdn.split("::", 1)
-    artifact = snapshot.canonical_artifact(domain, code)
-    if artifact is None:
+        return "NOT_FOUND", {"artifact": fqdn, "reason": "expected a <namespace>::<CODE> FQDN"}
+    canonical = snapshot.canonical(fqdn)
+    if canonical is None:
         return "NOT_FOUND", {"artifact": fqdn, "reason": "not present in snapshot"}
-    return "SUCCESS", {"artifact": fqdn, "canonical": artifact}
+    entry = snapshot.entry(fqdn) or {}
+    return "SUCCESS", {
+        "artifact": fqdn,
+        "kind": entry.get("kind"),
+        "domain": entry.get("domain"),
+        "owner_subdomain": entry.get("owner_subdomain"),
+        "canonical_path": entry.get("canonical_path"),
+        "addresses": entry.get("addresses", {}),
+        "canonical": canonical,
+    }

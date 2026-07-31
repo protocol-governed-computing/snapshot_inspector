@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Protocol-Governed Computing — Inspection Surface</title>
+    <link rel="stylesheet" href="/css/base.css">
+</head>
+<body>
+    <header class="app-header">
+        <div class="header-inner">
+            <h1 class="app-title">Protocol&#8209;Governed&nbsp;Computing <span class="accent">Inspection</span></h1>
+        </div>
+    </header>
+
+    <section class="hero">
+        <h2>Inspect the assembled snapshot</h2>
+        <p>
+            A read-only surface over a known warm-boot snapshot. Every interaction below crosses the
+            same <strong>governed transport boundary</strong> the reference workload uses: an external
+            protocol binds to a stable <em>operation identity</em>, which resolves through its own
+            TI/TE pair to a governed answer. Nothing here executes — inspection
+            <strong>reads</strong> what a snapshot contains, where the workload demonstrates that a
+            governed workflow <strong>runs</strong>.
+        </p>
+    </section>
+
+    <div class="card-grid">
+        <a href="/inspection/" class="card">
+            <span class="tag">Reference Tool</span>
+            <h3>Protocol Inspection</h3>
+            <p>
+                Browse the composition through the <code>si.</code> operation family &mdash; artifacts,
+                references, impact, stores, vocabulary and behaviour logic. The catalog you see is
+                fetched from the boundary, so it lists exactly what can actually be answered.
+            </p>
+        </a>
+    </div>
+
+    <footer class="app-footer">
+        PGC Inspection Surface &mdash; read-only, governed, protocol-neutral interaction boundary
+    </footer>
+</body>
+</html>
