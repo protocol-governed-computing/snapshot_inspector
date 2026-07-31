@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "snapshot_inspector"
+dynamic = ["version"]
+description = "PGC Protocol Inspection — read-only query surface over compiled projections and sealed snapshots"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [
+  { name = "Bhash Ganti aka Bachi" }
+]
+
+dependencies = []
+
+keywords = ["protocol-governed-computing", "pgc", "inspection", "snapshot", "registry"]
+
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Operating System :: OS Independent"
+]
+
+[project.urls]
+Repository = "https://github.com/protocol-governed-computing/snapshot_inspector"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["inspector*"]
+
+[tool.setuptools.dynamic]
+version = {file = "VERSION"}
