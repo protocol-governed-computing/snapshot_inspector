@@ -38,6 +38,7 @@ artifact_kind: STRUCTURE
 version: V0
 governed_by: fb.structure::CONSTITUTION_STRUCTURE_V0
 structure_scope: inspection
+reuse_visibility: platform_service
 core:
   summary: Build-time STRUCTURE manifest (inspection tool-domain scope)
   description: 'Compiles the inspection domain''s own boundary artifacts (TI/TE), resolving
