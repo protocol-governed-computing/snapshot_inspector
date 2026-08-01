@@ -39,6 +39,7 @@ output_contract:
 - { field: snapshot_id           , from: surface.snapshot_id }
 - { field: manifest_version      , from: surface.manifest_version }
 - { field: domains               , from: surface.domains }
+- { field: reuse_visibility      , from: surface.reuse_visibility }
 - { field: artifact_count        , from: surface.artifact_count }
 - { field: artifacts_by_kind     , from: surface.artifacts_by_kind }
 - { field: artifacts_by_namespace, from: surface.artifacts_by_namespace }
