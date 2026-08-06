@@ -1,7 +1,7 @@
-# TE_SI_SNAPSHOT_SUMMARY_V0
+# TE_SI_CAPABILITY_SURFACE_V0
 
 **Kind:** Transport Egress Contract (Transport Standard V0 §7)
-**Operation Identity:** `si.snapshot.summary`
+**Operation Identity:** `si.capability.surface`
 
 Classifies an inspection result into a protocol-neutral Result Class and declares the output
 projection. It carries **no** protocol semantics — no HTTP status, no exit code
@@ -24,11 +24,11 @@ Inspection executes nothing and so produces no trace: `evidence_policy: none`. D
 ## Machine
 
 ```yaml
-fqdn: inspection::TE_SI_SNAPSHOT_SUMMARY_V0
+fqdn: inspection::TE_SI_CAPABILITY_SURFACE_V0
 artifact_kind: TRANSPORT_EGRESS
 version: v0
 governed_by: fb.transport::CONSTITUTION_TRANSPORT_EGRESS_V0
-operation: si.snapshot.summary
+operation: si.capability.surface
 
 result_classification:
   SUCCESS:   SUCCESS
@@ -36,16 +36,9 @@ result_classification:
 default_result_class: EXECUTION_FAILURE
 
 output_contract:
-- { field: snapshot_id           , from: surface.snapshot_id }
-- { field: manifest_version      , from: surface.manifest_version }
-- { field: domains               , from: surface.domains }
-- { field: reuse_visibility      , from: surface.reuse_visibility }
-- { field: artifact_count        , from: surface.artifact_count }
-- { field: artifacts_by_kind     , from: surface.artifacts_by_kind }
-- { field: artifacts_by_namespace, from: surface.artifacts_by_namespace }
-- { field: store_count           , from: surface.store_count }
-- { field: workflow_count        , from: surface.workflow_count }
-- { field: behavior_logic_count  , from: surface.behavior_logic_count }
+- { field: filter          , from: surface.filter }
+- { field: capability_count, from: surface.capability_count }
+- { field: capabilities    , from: surface.capabilities }
 
 evidence_policy: none
 ```

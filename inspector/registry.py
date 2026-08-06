@@ -37,6 +37,7 @@ from inspector.queries.snapshot_validate import snapshot_validate
 from inspector.queries.topology_impact import topology_impact
 from inspector.reads.artifact_indexed import artifact_indexed
 from inspector.reads.artifact_list import artifact_list
+from inspector.reads.capability_surface import capability_surface
 from inspector.reads.artifact_show import artifact_show
 from inspector.reads.behavior_logic_list import behavior_logic_list
 from inspector.reads.behavior_logic_show import behavior_logic_show
@@ -57,6 +58,7 @@ _PROJECTIONS: tuple[Projection, ...] = (
     snapshot_topology,
     snapshot_validate,
     artifact_list,
+    capability_surface,
     artifact_show,
     artifact_indexed,
     artifact_refs,

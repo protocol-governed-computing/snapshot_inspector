@@ -38,6 +38,7 @@ from inspector.reads.artifact_list import artifact_list
 from inspector.reads.artifact_show import artifact_show
 from inspector.reads.behavior_logic_list import behavior_logic_list
 from inspector.reads.behavior_logic_show import behavior_logic_show
+from inspector.reads.capability_surface import capability_surface
 from inspector.reads.catalog import catalog
 from inspector.reads.snapshot_summary import snapshot_summary
 from inspector.reads.snapshot_topology import snapshot_topology
@@ -74,8 +75,13 @@ SPECS: dict[str, Spec] = {
         SNAPSHOT_READ, "SNAPSHOT", "Summary",
         "Composition identity, domains, and published counts by kind.",
         snapshot_summary,
-        ["snapshot_id", "manifest_version", "domains", "artifact_count", "artifacts_by_kind",
-         "artifacts_by_namespace", "store_count", "workflow_count", "behavior_logic_count"]),
+        # `reuse_visibility` is what P3 bounds a reuse search by — a domain declaring whether it may
+        # be drawn on at all. It had been added to the TE by hand and was therefore dropped the
+        # first time this script regenerated the contracts: a generated artifact edited in place is
+        # a change waiting to be reverted, so the declaration lives here.
+        ["snapshot_id", "manifest_version", "domains", "reuse_visibility", "artifact_count",
+         "artifacts_by_kind", "artifacts_by_namespace", "store_count", "workflow_count",
+         "behavior_logic_count"]),
     "si.snapshot.topology": Spec(
         SNAPSHOT_READ, "SNAPSHOT", "Topology",
         "Domain → subdomain → workflow map of the composition.",
@@ -136,6 +142,13 @@ SPECS: dict[str, Spec] = {
         "Which workflows and capability contracts reach a store, and through which binding.",
         store_consumers, ["key", "store", "domain", "workflows", "consumer_ccs", "bindings"],
         {"store": (STRING, True)}),
+
+    # ── CAPABILITIES ──────────────────────────────────────────────
+    "si.capability.surface": Spec(
+        SNAPSHOT_READ, "STORES", "Capability surface",
+        "Each capability side effect's operations and the fields they declare they yield.",
+        capability_surface, ["filter", "capability_count", "capabilities"],
+        {"capability": (STRING, False)}),
 
     # ── VOCABULARY ────────────────────────────────────────────────
     "si.vocab.search": Spec(

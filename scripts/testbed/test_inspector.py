@@ -78,7 +78,12 @@ def _write(root: Path, relative: str, payload) -> None:
 
 _CS = {
     "fqdn_id": "shared::CS_STORE_V0", "artifact_type": "CS",
-    "frontmatter": {"core": {}},
+    "frontmatter": {"core": {"category": "storage", "operations": {
+        "READ": {"input": ["key"], "output": ["result_status", "value"],
+                 "result_status_values": ["SUCCESS", "NOT_FOUND"]},
+        "WRITE": {"input": ["key", "value"], "output": ["result_status"],
+                  "result_status_values": ["SUCCESS", "VIOLATION"]},
+    }}},
 }
 _WF = {
     "fqdn_id": "d::WF_X_V0", "artifact_type": "WF", "namespace": "d",
@@ -527,6 +532,36 @@ def test_stores() -> None:
         check("store_list_unknown_domain_not_found", status == "NOT_FOUND")
 
 
+def test_capability_surface() -> None:
+    """What an operation declares it yields — the fact a binding is checked against.
+
+    A design once bound an output to a field its operation never publishes, and nothing could
+    object because nothing published the operation's surface. These assert the fact is readable and
+    exact: the outputs are the authored ones, not a superset, or a rule over them would pass a
+    binding that reads something absent.
+    """
+    with Fixture() as root:
+        status, payload = query("si.capability.surface", {}, root)
+        check("capability_surface", status == "SUCCESS" and payload["capability_count"] == 1)
+
+        surface = payload["capabilities"][0]
+        check("capability_surface_identity", surface["capability"] == "shared::CS_STORE_V0")
+        check("capability_surface_operations",
+              sorted(surface["operations"]) == ["READ", "WRITE"])
+        # Exact, not merely containing: a rule checking a binding source needs the whole truth.
+        check("capability_surface_outputs_exact",
+              surface["operations"]["WRITE"]["output"] == ["result_status"]
+              and surface["operations"]["READ"]["output"] == ["result_status", "value"])
+
+        status, payload = query("si.capability.surface",
+                                {"capability": "shared::CS_STORE_V0"}, root)
+        check("capability_surface_filtered",
+              status == "SUCCESS" and payload["capability_count"] == 1)
+
+        status, _ = query("si.capability.surface", {"capability": "d::CS_GHOST_V0"}, root)
+        check("capability_surface_absent_not_found", status == "NOT_FOUND")
+
+
 # ── CLI (a client of the API, never a second engine) ─────────────
 
 def _cli(argv: list[str], root: Path) -> tuple[int, str]:
@@ -610,6 +645,7 @@ def main() -> None:
         test_behavior_logic,
         test_snapshot_reads,
         test_stores,
+        test_capability_surface,
         test_refs_and_impact,
         test_validate_green,
         test_validate_detects,
