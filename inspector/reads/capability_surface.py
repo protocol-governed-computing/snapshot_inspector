@@ -43,11 +43,37 @@ def capability_surface(snapshot: Snapshot, params: dict[str, Any]) -> tuple[str,
             },
         }
 
+    # A capability transform is a capability. The surface published side effects only, which left
+    # every consumer unable to ask what a transform accepts — and a design compiler that cannot ask
+    # cannot hold a composition step to the transform it names. Published under its own key so the
+    # side-effect surface, and the egress contract that enumerates it, are unchanged.
+    transforms: dict[str, Any] = {}
+    for fqdn, entry in sorted(entries.items()):
+        if entry.get("kind") != "CT":
+            continue
+        core = ((snapshot.canonical(fqdn) or {}).get("frontmatter") or {}).get("core") or {}
+        transforms[fqdn] = {
+            "transform": fqdn,
+            "inputs": {
+                name: {"type": spec.get("type"), "required": bool(spec.get("required"))}
+                for name, spec in sorted((core.get("inputs") or {}).items())
+            },
+            "outputs": sorted((core.get("outputs") or {})),
+        }
+
     if capability is not None:
+        if capability in transforms:
+            return "SUCCESS", {
+                "filter": {"capability": capability},
+                "capability_count": 0,
+                "capabilities": [],
+                "transform_count": 1,
+                "transforms": [transforms[capability]],
+            }
         if capability not in surfaces:
             return "NOT_FOUND", {
-                "reason": f"no capability side effect {capability!r} in this composition",
-                "known_capabilities": sorted(surfaces),
+                "reason": f"no capability {capability!r} in this composition",
+                "known_capabilities": sorted(surfaces) + sorted(transforms),
             }
         surfaces = {capability: surfaces[capability]}
 
@@ -55,4 +81,6 @@ def capability_surface(snapshot: Snapshot, params: dict[str, Any]) -> tuple[str,
         "filter": {"capability": capability},
         "capability_count": len(surfaces),
         "capabilities": list(surfaces.values()),
+        "transform_count": len(transforms),
+        "transforms": list(transforms.values()),
     }
