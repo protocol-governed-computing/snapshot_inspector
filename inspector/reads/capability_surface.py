@@ -1,4 +1,4 @@
-"""si.capability.surface — what each capability side effect's operations declare they yield.
+"""si.capability.surface — what each capability declares it accepts and yields.
 
 A composition can only be checked against a capability's *declared* surface if that surface is
 published. It was not, and a design consequently bound a step's output named `authorized` to a field
@@ -61,7 +61,39 @@ def capability_surface(snapshot: Snapshot, params: dict[str, Any]) -> tuple[str,
             "outputs": sorted((core.get("outputs") or {})),
         }
 
+    # A capability contract is a capability, and the same gap one level up. A design that reuses a
+    # contract from another subdomain declares no interface for it — the contract already exists, so
+    # there is nothing to restate — which left every consumer unable to ask what that contract
+    # requires. A workflow consequently handed a reused contract nothing, three times in one change,
+    # and each time the omission surfaced only when the act ran and the contract received nulls.
+    #
+    # Published under its own key, for the reason transforms are: the side-effect surface and the
+    # egress contract that enumerates it stay as they are.
+    contracts: dict[str, Any] = {}
+    for fqdn, entry in sorted(entries.items()):
+        if entry.get("kind") != "CC":
+            continue
+        core = ((snapshot.canonical(fqdn) or {}).get("frontmatter") or {}).get("core") or {}
+        contracts[fqdn] = {
+            "contract": fqdn,
+            "inputs": {
+                name: {"type": spec.get("type"), "required": bool(spec.get("required"))}
+                for name, spec in sorted((core.get("inputs") or {}).items())
+            },
+            "outputs": sorted((core.get("outputs") or {})),
+        }
+
     if capability is not None:
+        if capability in contracts:
+            return "SUCCESS", {
+                "filter": {"capability": capability},
+                "capability_count": 0,
+                "capabilities": [],
+                "transform_count": 0,
+                "transforms": [],
+                "contract_count": 1,
+                "contracts": [contracts[capability]],
+            }
         if capability in transforms:
             return "SUCCESS", {
                 "filter": {"capability": capability},
@@ -69,11 +101,13 @@ def capability_surface(snapshot: Snapshot, params: dict[str, Any]) -> tuple[str,
                 "capabilities": [],
                 "transform_count": 1,
                 "transforms": [transforms[capability]],
+                "contract_count": 0,
+                "contracts": [],
             }
         if capability not in surfaces:
             return "NOT_FOUND", {
                 "reason": f"no capability {capability!r} in this composition",
-                "known_capabilities": sorted(surfaces) + sorted(transforms),
+                "known_capabilities": sorted(surfaces) + sorted(transforms) + sorted(contracts),
             }
         surfaces = {capability: surfaces[capability]}
 
@@ -83,4 +117,6 @@ def capability_surface(snapshot: Snapshot, params: dict[str, Any]) -> tuple[str,
         "capabilities": list(surfaces.values()),
         "transform_count": len(transforms),
         "transforms": list(transforms.values()),
+        "contract_count": len(contracts),
+        "contracts": list(contracts.values()),
     }
