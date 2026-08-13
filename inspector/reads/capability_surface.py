@@ -60,6 +60,14 @@ def capability_surface(snapshot: Snapshot, params: dict[str, Any]) -> tuple[str,
         core = ((snapshot.canonical(fqdn) or {}).get("frontmatter") or {}).get("core") or {}
         transforms[fqdn] = {
             "transform": fqdn,
+            # How the transform expresses a judgement about its subject: `raises` refuses, which
+            # the execution contract reads as VIOLATION; `returns` yields the judgement as an
+            # output, so the step succeeds whatever it found; `never` judges nothing. Published
+            # because a consumer cannot tell the three apart otherwise — every transform raises on
+            # malformed input, so "it raises" is not the distinction, and a step routing on
+            # transform status when it should route on a returned value looks identical to one
+            # that is right. Absent rather than defaulted where a transform has not declared it.
+            "refusal": core.get("refusal"),
             "inputs": {
                 name: {"type": spec.get("type"), "required": bool(spec.get("required"))}
                 for name, spec in sorted((core.get("inputs") or {}).items())
