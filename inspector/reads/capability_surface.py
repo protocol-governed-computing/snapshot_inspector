@@ -35,6 +35,12 @@ def capability_surface(snapshot: Snapshot, params: dict[str, Any]) -> tuple[str,
             "category": core.get("category"),
             "operations": {
                 op: {
+                    # Whether the operation changes what it addresses. Published because a consumer
+                    # holding a reach to read-only cannot do it otherwise: the name is inference and
+                    # `idempotent` answers a different question — a last-write-wins write is
+                    # idempotent. Absent rather than defaulted where a capability has not declared
+                    # it, so an unstated effect is visibly unstated.
+                    "effect": spec.get("effect"),
                     "input": list(spec.get("input") or []),
                     "output": list(spec.get("output") or []),
                     "result_status_values": list(spec.get("result_status_values") or []),
@@ -81,6 +87,21 @@ def capability_surface(snapshot: Snapshot, params: dict[str, Any]) -> tuple[str,
                 for name, spec in sorted((core.get("inputs") or {}).items())
             },
             "outputs": sorted((core.get("outputs") or {})),
+            # The pipeline as authored, not a judgement about it. A consumer asking whether a
+            # contract writes reads each step's operation and looks its effect up on the capability
+            # surface; summarising that here would be deriving a relationship, which is the other
+            # query class's authority and not this one's.
+            "steps": [
+                {
+                    "step": step.get("step"),
+                    "side_effect": step.get("side_effect"),
+                    "transform": step.get("transform"),
+                    "op": step.get("op"),
+                    "store": step.get("store"),
+                }
+                for step in (core.get("pipeline") or [])
+                if isinstance(step, dict)
+            ],
         }
 
     if capability is not None:
