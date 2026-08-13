@@ -43,7 +43,7 @@ input_contract:
 catalog:
   category: STORES
   label: List
-  summary: Every declared store with its owning STRUCTURE, path and binding count.
+  summary: Every declared store with its owning STRUCTURE, path, and the bindings that reach it.
 
 # Context requirements — inert in V0 (AC reserved).
 context_requirements: []
