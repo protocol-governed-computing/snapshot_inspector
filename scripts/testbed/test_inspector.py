@@ -89,7 +89,14 @@ _WF = {
     "fqdn_id": "d::WF_X_V0", "artifact_type": "WF", "namespace": "d",
     "frontmatter": {"subdomain": "sub", "core": {
         "summary": "does a thing", "start_node": "CC_A_V0",
-        "nodes": {"CC_A_V0": {"type": "CC"}},
+        # A sealed rule set, carried as node input the way a compiled phase workflow carries one.
+        # Nested deliberately: `si.rule_set.list` searches rather than addresses by path, because
+        # which node holds the rules is the workflow's own business.
+        "nodes": {"CC_A_V0": {"type": "CC", "inputs": {"rule_set": [
+            {"id": "RULE_ONE", "check": "CELL_NOT_EMPTY", "register": "r"},
+            {"id": "RULE_TWO", "check": "TABLE_PRESENT", "register": "r"},
+            {"id": "RULE_ONE", "check": "CELL_NOT_EMPTY", "register": "s"},
+        ]}}},
     }},
 }
 _CC = {"fqdn_id": "d::CC_A_V0", "artifact_type": "CC", "frontmatter": {"core": {}}}
@@ -347,6 +354,28 @@ def test_artifact_indexed() -> None:
         # membership is an answer, not a failure — absent must still be SUCCESS
         status, payload = query("si.artifact.indexed", {"artifact": "d::ABSENT_V0"}, root)
         check("indexed_false_is_success", status == "SUCCESS" and payload["indexed"] is False)
+
+
+def test_rule_set_list() -> None:
+    """What a snapshot publishes about the rules in force, and what it deliberately does not."""
+    with Fixture() as root:
+        status, payload = query("si.rule_set.list", {}, root)
+        check("rule_set_list_ok", status == "SUCCESS")
+        check("rule_set_list_finds_carrier", payload["carrier_count"] == 1)
+        carrier = payload["carriers"][0]
+        check("rule_set_list_names_carrier", carrier["artifact"] == "d::WF_X_V0")
+        # Three rules are declared and one identifier is declared twice — once per register it is
+        # derived for. The question is whether a rule is in force, not how often it was written.
+        check("rule_set_list_counts_rules", carrier["rule_count"] == 3)
+        check("rule_set_list_dedupes_ids", carrier["rules"] == ["RULE_ONE", "RULE_TWO"])
+
+        status, payload = query("si.rule_set.list", {"artifact": "d::WF_X_V0"}, root)
+        check("rule_set_list_narrows", status == "SUCCESS" and payload["carrier_count"] == 1)
+
+        # An artifact that exists and carries no rules is a governed answer, not an error.
+        status, payload = query("si.rule_set.list", {"artifact": "d::CC_A_V0"}, root)
+        check("rule_set_list_carrierless_is_not_found", status == "NOT_FOUND")
+        check("rule_set_list_says_why", "rule set" in payload["reason"])
 
 
 def test_vocab() -> None:
@@ -615,6 +644,51 @@ def test_cli() -> None:
     check("cli_bad_snapshot_exit2", code == 2)
 
 
+def test_transport_contracts_agree_with_their_declaration() -> None:
+    """The contracts on disk are what the declaration produces — proved by tampering.
+
+    A generated artifact can be edited by hand and nothing notices: `TI_SI_STORE_LIST_V0`'s catalog
+    summary was improved in the artifact and not in the declaration, and the drift surfaced only
+    when someone happened to regenerate — overwriting the better wording. `--check` exists for that,
+    and a check nobody has seen fail is a check nobody has seen.
+    """
+    import contextlib
+    import io
+    import shutil
+    import tempfile
+
+    author = _authoring
+
+    def run(*argv: str) -> int:
+        """The generator's exit code, with its reporting kept out of the test's own output."""
+        sink = io.StringIO()
+        with contextlib.redirect_stdout(sink), contextlib.redirect_stderr(sink):
+            return author.main(list(argv))
+
+    check("contracts_agree", run("--check") == 0)
+
+    transport = author.TRANSPORT_DIR
+    victim = next(iter(sorted(transport.glob("TI_*.md"))))
+    with tempfile.TemporaryDirectory() as tmp:
+        kept = Path(tmp) / victim.name
+        shutil.copy2(victim, kept)
+        try:
+            victim.write_text(victim.read_text() + "\nhand-edited\n", encoding="utf-8")
+            check("contracts_check_catches_a_hand_edit", run("--check") == 1)
+        finally:
+            shutil.copy2(kept, victim)
+
+        orphan = transport / "TI_SI_DECLARED_BY_NOBODY_V0.md"
+        try:
+            orphan.write_text("", encoding="utf-8")
+            check("contracts_check_catches_an_orphan", run("--check") == 1)
+        finally:
+            orphan.unlink(missing_ok=True)
+
+    check("contracts_agree_after_restore", run("--check") == 0)
+    check("contracts_check_refuses_unknown_argument", run("--nonsense") == 2)
+
+
 def test_cli_is_generated_from_catalog() -> None:
     """Every registered operation is reachable, and nothing else is.
 
@@ -641,6 +715,7 @@ def main() -> None:
         test_artifact_show,
         test_artifact_list,
         test_artifact_indexed,
+        test_rule_set_list,
         test_vocab,
         test_behavior_logic,
         test_snapshot_reads,
@@ -651,6 +726,7 @@ def main() -> None:
         test_validate_detects,
         test_cli,
         test_cli_is_generated_from_catalog,
+        test_transport_contracts_agree_with_their_declaration,
     ):
         print(f"\n{test.__name__}")
         test()
