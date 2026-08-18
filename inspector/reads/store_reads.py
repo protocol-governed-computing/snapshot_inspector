@@ -48,6 +48,16 @@ def store_list(snapshot: Snapshot, params: dict[str, Any]) -> tuple[str, dict[st
                 "paths": sorted({d["path"] for d in store["declarations"]}),
                 "declared_by": sorted({d["declared_by"] for d in store["declarations"]}),
                 "binding_count": sum(len(d["bindings"]) for d in store["declarations"]),
+                # The identities behind the count. Published because a consumer asking which
+                # records a binding covers cannot do it otherwise: `si.store.show` names them, one
+                # store per call, and a capability contract is a fixed pipeline with no iteration —
+                # so a rule handed every store at once could read the count and never the binding.
+                # This is the count's own input, projected rather than derived.
+                "bindings": sorted({
+                    binding["rb"]
+                    for d in store["declarations"] for binding in d["bindings"]
+                    if binding.get("rb")
+                }),
             }
             for key, store in sorted(selected.items())
         ],

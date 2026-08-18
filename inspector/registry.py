@@ -42,6 +42,7 @@ from inspector.reads.artifact_show import artifact_show
 from inspector.reads.behavior_logic_list import behavior_logic_list
 from inspector.reads.behavior_logic_show import behavior_logic_show
 from inspector.reads.catalog import catalog
+from inspector.reads.rule_set_list import rule_set_list
 from inspector.reads.snapshot_summary import snapshot_summary
 from inspector.reads.snapshot_topology import snapshot_topology
 from inspector.reads.store_reads import store_consumers, store_list, store_show
@@ -58,6 +59,7 @@ _PROJECTIONS: tuple[Projection, ...] = (
     snapshot_topology,
     snapshot_validate,
     artifact_list,
+    rule_set_list,
     capability_surface,
     artifact_show,
     artifact_indexed,

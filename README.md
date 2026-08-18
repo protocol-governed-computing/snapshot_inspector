@@ -63,6 +63,7 @@ privately believes. There is no second list anywhere.
 | `si.vocab.resolve` | READ | `artifact` \| `address`+`domain` | identity ↔ per-domain address |
 | `si.behavior_logic.list` | READ | — | workflows carrying a published graph |
 | `si.behavior_logic.show` | READ | `wf` | one workflow's execution graph |
+| `si.rule_set.list` | READ | `artifact?` | every artifact carrying a sealed rule set, and the rule identifiers it declares |
 | `si.catalog` | READ | — | every operation this inspector answers |
 
 A missing **required** parameter returns `NOT_FOUND` — a well-formed question the snapshot cannot

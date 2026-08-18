@@ -1,9 +1,9 @@
-# TI_SI_STORE_LIST_V0
+# TI_SI_RULE_SET_LIST_V0
 
 **Kind:** Transport Ingress Contract (Transport Standard V0 §6)
-**Operation Identity:** `si.store.list`
+**Operation Identity:** `si.rule_set.list`
 
-Declares `si.store.list` in full: what it admits, how it is presented, and which implementation
+Declares `si.rule_set.list` in full: what it admits, how it is presented, and which implementation
 answers it. This artifact is the **authority** — `inspector.catalog` reads the operation set from
 the compiled contracts, and `inspector.registry` holds implementations and no metadata. Adding,
 renaming or re-pointing an operation is an authoring act here, sealed into the snapshot and
@@ -25,35 +25,35 @@ admit one operation and refuse another.
 ## Machine
 
 ```yaml
-fqdn: inspection::TI_SI_STORE_LIST_V0
+fqdn: inspection::TI_SI_RULE_SET_LIST_V0
 artifact_kind: TRANSPORT_INGRESS
 version: v0
 governed_by: fb.transport::CONSTITUTION_TRANSPORT_INGRESS_V0
-operation: si.store.list
+operation: si.rule_set.list
 
 # Input contract — declared and enforced at the boundary before the handler is reached.
 # A parameter declared `type: boolean` is what a client renders as a switch; `flags` is derived
 # from the contract, never stated twice.
 input_contract:
-  domain:
+  artifact:
     type: string
     required: false
 
 # Presentation — the published catalog a client builds its menu from.
 catalog:
-  category: STORES
-  label: List
-  summary: Every declared store with its owning STRUCTURE, path, and the bindings that reach it.
+  category: ARTIFACTS
+  label: Rule sets
+  summary: Every artifact carrying a sealed rule set, and the rule identifiers it declares.
 
 # Context requirements — inert in V0 (AC reserved).
 context_requirements: []
 
 handler:
   kind: SNAPSHOT_READ
-  operation: si.store.list
+  operation: si.rule_set.list
   implementation:
-    module: inspector.reads.store_reads
-    callable: store_list
+    module: inspector.reads.rule_set_list
+    callable: rule_set_list
   payload_template:
-    domain: "${input.domain}"
+    artifact: "${input.artifact}"
 ```

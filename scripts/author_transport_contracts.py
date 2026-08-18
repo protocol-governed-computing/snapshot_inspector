@@ -22,6 +22,16 @@ Re-run after changing any declaration below:
 
     PYTHONPATH=. python3 scripts/author_transport_contracts.py
     protocol_compiler/compile_domain.sh <workspace>/snapshot_inspector
+
+`--check` reports whether the contracts on disk still agree with these declarations and writes
+nothing, exiting 1 if any differ. It exists because a generated artifact can be edited by hand and
+nothing notices: `TI_SI_STORE_LIST_V0`'s catalog summary was improved in the artifact and not in the
+declaration here, and the drift surfaced only when someone happened to regenerate — by which point
+the better wording had been silently overwritten. A generator with no agreement check is a generator
+whose output is only as current as the last person who remembered to run it.
+
+An unrecognised argument stops the run rather than falling through, because the default action
+writes and a flag whose whole meaning is "do nothing yet" must never be the thing that overwrites.
 """
 
 from __future__ import annotations
@@ -37,6 +47,7 @@ from inspector.reads.artifact_indexed import artifact_indexed
 from inspector.reads.artifact_list import artifact_list
 from inspector.reads.artifact_show import artifact_show
 from inspector.reads.behavior_logic_list import behavior_logic_list
+from inspector.reads.rule_set_list import rule_set_list
 from inspector.reads.behavior_logic_show import behavior_logic_show
 from inspector.reads.capability_surface import capability_surface
 from inspector.reads.catalog import catalog
@@ -129,7 +140,7 @@ SPECS: dict[str, Spec] = {
     # ── STORES ────────────────────────────────────────────────────
     "si.store.list": Spec(
         SNAPSHOT_READ, "STORES", "List",
-        "Every declared store with its owning STRUCTURE, path and binding count.",
+        "Every declared store with its owning STRUCTURE, path, and the bindings that reach it.",
         store_list, ["filter", "store_count", "stores"],
         {"domain": (STRING, False)}),
     "si.store.show": Spec(
@@ -163,6 +174,11 @@ SPECS: dict[str, Spec] = {
         {"artifact": (STRING, False), "address": (STRING, False), "domain": (STRING, False)}),
 
     # ── BEHAVIOR ──────────────────────────────────────────────────
+    "si.rule_set.list": Spec(
+        SNAPSHOT_READ, "ARTIFACTS", "Rule sets",
+        "Every artifact carrying a sealed rule set, and the rule identifiers it declares.",
+        rule_set_list, ["artifact", "carrier_count", "carriers"],
+        {"artifact": (STRING, False)}),
     "si.behavior_logic.list": Spec(
         SNAPSHOT_READ, "BEHAVIOR", "Workflows",
         "Every workflow carrying a published behavior-logic graph.",
@@ -313,7 +329,24 @@ evidence_policy: none
 """
 
 
-def main() -> int:
+def rendered() -> dict[Path, str]:
+    """Every contract this declaration produces, as path → text. Written by both callers."""
+    out: dict[Path, str] = {}
+    for operation, spec in sorted(SPECS.items()):
+        for side, render in (("TI", ti_markdown), ("TE", te_markdown)):
+            out[TRANSPORT_DIR / f"{artifact_code(operation, side)}.md"] = render(operation, spec)
+    return out
+
+
+def main(argv: list[str] | None = None) -> int:
+    argv = list(sys.argv[1:] if argv is None else argv)
+    check_only = "--check" in argv
+    unknown = [a for a in argv if a != "--check"]
+    if unknown:
+        print(__doc__.strip())
+        print(f"\nunrecognised argument(s): {' '.join(unknown)}", file=sys.stderr)
+        return 2
+
     # Every declared implementation must be one the registry imports — the artifact may only name
     # code that can actually be resolved when the contract is read back.
     unregistered = sorted(
@@ -330,17 +363,34 @@ def main() -> int:
         print(f"registered implementation named by no operation: {unused}", file=sys.stderr)
         return 1
 
+    contracts = rendered()
+
+    if check_only:
+        on_disk = {p for p in TRANSPORT_DIR.glob("T[IE]_*.md")}
+        # Three ways to disagree, and they are named apart because they are fixed differently: a
+        # contract edited by hand, one for an operation no longer declared, and one never written.
+        drifted = sorted(p.name for p, text in contracts.items()
+                         if not p.is_file() or p.read_text(encoding="utf-8") != text)
+        orphaned = sorted(p.name for p in on_disk - set(contracts))
+        for name in drifted:
+            print(f"  DRIFTED  {name}")
+        for name in orphaned:
+            print(f"  ORPHANED {name}  — declared by no operation")
+        if drifted or orphaned:
+            print(f"\n{len(drifted) + len(orphaned)} contract(s) do not agree with the "
+                  f"declaration that produces them.")
+            return 1
+        print(f"  OK       {len(contracts)} contract(s) for {len(SPECS)} operations agree")
+        return 0
+
     TRANSPORT_DIR.mkdir(parents=True, exist_ok=True)
     for existing in TRANSPORT_DIR.glob("T[IE]_*.md"):
         existing.unlink()   # a removed operation must lose its contracts, not leave them orphaned
 
-    written = 0
-    for operation, spec in sorted(SPECS.items()):
-        for side, render in (("TI", ti_markdown), ("TE", te_markdown)):
-            (TRANSPORT_DIR / f"{artifact_code(operation, side)}.md").write_text(
-                render(operation, spec), encoding="utf-8")
-            written += 1
-    print(f"authored {written} boundary contracts for {len(SPECS)} operations → {TRANSPORT_DIR}")
+    for path, text in contracts.items():
+        path.write_text(text, encoding="utf-8")
+    print(f"authored {len(contracts)} boundary contracts for {len(SPECS)} operations "
+          f"→ {TRANSPORT_DIR}")
     return 0
 
 
