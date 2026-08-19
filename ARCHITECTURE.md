@@ -1,8 +1,8 @@
 # Architecture — `snapshot_inspector`
 
-**Release 5.** This document is frozen for this release. It describes what this repository is, what
-it owns, and what it must never do. It is written to be read before any code, and assumes no prior
-familiarity with Protocol-Governed Computing.
+This document describes what this repository is, what it owns, and what it must never do. It is
+written to be read before any code, and assumes no prior familiarity with Protocol-Governed
+Computing.
 
 For the big picture — what PGC is and how the repositories compose — see
 **https://github.com/protocol-governed-computing**.
@@ -183,6 +183,7 @@ inspector/
     cli.py        the `si` CLI: a client of the API, generated from the catalog
 
 transport/        the inspection:: contracts — what may be asked, declared
+registry/         this repo's own build structure — it compiles as a domain like any other
 client/           the browser surface: renders results, derives nothing
 doc/              the `si` command reference
 ```
