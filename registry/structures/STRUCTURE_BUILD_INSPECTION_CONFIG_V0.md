@@ -117,8 +117,3 @@ build_phases:
   target: compiled/artifacts/
 ```
 
-## Version History
-
-- **V0**: First PGC tool-domain build manifest. Compiles `inspection::` boundary contracts against
-  the imported compiled platform surface; emits only inspection artifacts. Platform surface
-  unchanged.
