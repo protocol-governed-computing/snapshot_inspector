@@ -27,7 +27,9 @@ Inspection executes nothing and so produces no trace: `evidence_policy: none`. D
 fqdn: inspection::TE_SI_SNAPSHOT_VALIDATE_V0
 artifact_kind: TRANSPORT_EGRESS
 version: v0
-governed_by: fb.transport::CONSTITUTION_TRANSPORT_EGRESS_V0
+governed_by: transport::CONSTITUTION_TRANSPORT_EGRESS_V0
+authority: pgc.platform
+concern: inspection
 operation: si.snapshot.validate
 
 result_classification:

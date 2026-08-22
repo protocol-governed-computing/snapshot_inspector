@@ -243,7 +243,9 @@ admit one operation and refuse another.
 fqdn: inspection::{artifact_code(operation, 'TI')}
 artifact_kind: TRANSPORT_INGRESS
 version: v0
-governed_by: fb.transport::CONSTITUTION_TRANSPORT_INGRESS_V0
+governed_by: transport::CONSTITUTION_TRANSPORT_INGRESS_V0
+authority: pgc.platform
+concern: inspection
 operation: {operation}
 
 # Input contract — declared and enforced at the boundary before the handler is reached.
@@ -313,7 +315,9 @@ Inspection executes nothing and so produces no trace: `evidence_policy: none`. D
 fqdn: inspection::{artifact_code(operation, 'TE')}
 artifact_kind: TRANSPORT_EGRESS
 version: v0
-governed_by: fb.transport::CONSTITUTION_TRANSPORT_EGRESS_V0
+governed_by: transport::CONSTITUTION_TRANSPORT_EGRESS_V0
+authority: pgc.platform
+concern: inspection
 operation: {operation}
 
 result_classification:
