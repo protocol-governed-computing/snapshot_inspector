@@ -2,7 +2,7 @@
 
 **Artifact Type**: STRUCTURE
 **Version**: V0
-**Governed By**: fb.structure::CONSTITUTION_STRUCTURE_V0
+**Governed By**: structure::CONSTITUTION_STRUCTURE_V0
 
 ---
 
@@ -36,7 +36,9 @@ would become inaccurate the moment the surface moved.
 fqdn: inspection::STRUCTURE_BUILD_INSPECTION_CONFIG_V0
 artifact_kind: STRUCTURE
 version: V0
-governed_by: fb.structure::CONSTITUTION_STRUCTURE_V0
+governed_by: structure::CONSTITUTION_STRUCTURE_V0
+authority: pgc.platform
+concern: inspection
 structure_scope: inspection
 reuse_visibility: platform_service
 core:
@@ -115,8 +117,3 @@ build_phases:
   target: compiled/artifacts/
 ```
 
-## Version History
-
-- **V0**: First PGC tool-domain build manifest. Compiles `inspection::` boundary contracts against
-  the imported compiled platform surface; emits only inspection artifacts. Platform surface
-  unchanged.

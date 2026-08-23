@@ -28,7 +28,9 @@ admit one operation and refuse another.
 fqdn: inspection::TI_SI_CAPABILITY_SURFACE_V0
 artifact_kind: TRANSPORT_INGRESS
 version: v0
-governed_by: fb.transport::CONSTITUTION_TRANSPORT_INGRESS_V0
+governed_by: transport::CONSTITUTION_TRANSPORT_INGRESS_V0
+authority: pgc.platform
+concern: inspection
 operation: si.capability.surface
 
 # Input contract — declared and enforced at the boundary before the handler is reached.
