@@ -22,3 +22,4 @@ snapshot/
 # `3e` §3.2 makes evidence output only; nothing reads these.
 snapshot/determinations/
 **/snapshot/determinations/
+*.py[cod]
