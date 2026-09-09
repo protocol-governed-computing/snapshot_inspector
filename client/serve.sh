@@ -22,6 +22,7 @@ UMBRELLA="$(cd "$INSPECTOR/.." && pwd)"                    # protocol-governed-c
 
 export PGC_RUNTIME_ROOT="$UMBRELLA/protocol_runtime"
 export PGC_INSPECTOR_ROOT="$INSPECTOR"
+export PGC_ASSEMBLER_ROOT="$UMBRELLA/snapshot_assembler"
 # Impl roots are irrelevant to inspection (nothing executes) but are supplied so a composition
 # serving BOTH kinds from one adapter needs no second launcher.
 export PGC_IMPL_ROOTS="$UMBRELLA/software_governance:$UMBRELLA/conformance_workloads:$UMBRELLA/business_domains"
