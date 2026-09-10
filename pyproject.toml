@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pgc-inspector"
+version = "4.0.0"
+description = "PGC snapshot inspector — read-only query surface over compiled projections and sealed snapshots (command: si)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+authors = [{ name = "Bhash Ganti", email = "bachipeachy@gmail.com" }]
+
+keywords = ["protocol-governed-computing", "pgc", "inspection", "snapshot", "registry"]
+
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Operating System :: OS Independent",
+  "Topic :: Software Development :: Debuggers",
+]
+
+dependencies = []
+
+[project.scripts]
+si = "inspector.cli:main"
+
+[project.urls]
+Homepage = "https://omnibachi.org/"
+Repository = "https://github.com/protocol-governed-computing/snapshot_inspector"
+Standard = "https://doi.org/10.5281/zenodo.22150616"
+
+# Only the inspector package ships. `client/` is the browser surface, served from
+# the repository rather than installed; `transport/` and `registry/` hold governed
+# declarations, not code. None is imported by `inspector`.
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["inspector*"]
