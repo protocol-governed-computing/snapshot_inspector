@@ -73,7 +73,7 @@ privately believes. There is no second list anywhere.
 | `si.store.consumers` | READ | `store` | workflows and CCs reaching a store |
 | `si.vocab.search` | READ | `term` | matching vocabulary identities |
 | `si.vocab.resolve` | READ | `artifact` \| `address`+`domain` | identity ↔ per-domain address |
-| `si.behavior_logic.list` | READ | — | workflows carrying a published graph |
+| `si.behavior_logic.list` | READ | — | workflows carrying a published graph, with their node keys |
 | `si.behavior_logic.show` | READ | `wf` | one workflow's execution graph |
 | `si.rule_set.list` | READ | `artifact?` | every artifact carrying a sealed rule set, and the rule identifiers it declares |
 | `si.catalog` | READ | — | every operation this inspector answers |

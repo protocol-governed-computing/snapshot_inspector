@@ -408,6 +408,8 @@ def test_behavior_logic() -> None:
         check("bl_list", status == "SUCCESS" and payload["workflow_count"] == 1)
         check("bl_list_entry", payload["workflows"][0]["entry"] == "IN_X_V0")
         check("bl_list_png_absent", payload["workflows"][0]["projection_path"] is None)
+        # The nodes by key, so a design amending the workflow can route to a place it already has.
+        check("bl_list_nodes", payload["workflows"][0]["nodes"] == ["CC_A_V0"])
 
         status, payload = query("si.behavior_logic.show", {"wf": "d::WF_X_V0"}, root)
         check("bl_show", status == "SUCCESS" and payload["graph"]["wf_id"] == "WF_X_V0")
