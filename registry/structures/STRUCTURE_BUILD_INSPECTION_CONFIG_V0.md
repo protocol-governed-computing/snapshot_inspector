@@ -73,6 +73,7 @@ artifact_discovery:
   - TI
   - TE
 output_configuration:
+  root: snapshot
   artifacts:
     layer: PROTOCOL_BUILD_ROOT
     subpath: compiled/canonical
