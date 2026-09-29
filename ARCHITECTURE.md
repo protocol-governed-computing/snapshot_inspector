@@ -96,8 +96,8 @@ The split is load-bearing, not cosmetic:
 | `SNAPSHOT_QUERY` | **derives an answer** by traversing and evaluating snapshot state | references and dependencies, topology impact, snapshot validation |
 
 A read that quietly computed a relationship would be a query wearing a read's clothes — cheaper to
-call, and carrying an authority it never declared. Seventeen operations ship in this release,
-fourteen reads and three queries.
+call, and carrying an authority it never declared. Eighteen operations ship in this release,
+fifteen reads and three queries.
 
 ## 5. What it owns, and what it must never do
 
@@ -264,7 +264,7 @@ PYTHONPATH=. python3 -m inspector catalog           # what THIS snapshot declare
 PYTHONPATH=. python3 -m inspector snapshot validate # does it hold together?
 ```
 
-A good result has a specific shape. The catalog reports the same seventeen operations as there are
+A good result has a specific shape. The catalog reports the same eighteen operations as there are
 contracts in `transport/` — because both come from the same declarations, not because someone kept
 them in step. `validate` reports its checks individually, separating failures from advisories,
 rather than collapsing to a single pass/fail. And the check that matters most for this
