@@ -112,6 +112,26 @@ def capability_surface(snapshot: Snapshot, params: dict[str, Any]) -> tuple[str,
             ],
         }
 
+    # An admission gate, and the same gap one level further out. A transport entrance invokes a
+    # workflow, and the workflow's gate refuses a payload lacking what it requires. A design that
+    # changes the entrance and reuses the gate declares no interface for the gate, so nothing could
+    # say that the entrance stopped supplying something the gate still requires — and every
+    # registration through one entrance was refused at admission, with every phase admitting the
+    # design. Published under its own key, for the reason contracts are.
+    intents: dict[str, Any] = {}
+    for fqdn, entry in sorted(entries.items()):
+        if entry.get("kind") != "IN":
+            continue
+        core = ((snapshot.canonical(fqdn) or {}).get("frontmatter") or {}).get("core") or {}
+        intents[fqdn] = {
+            "intent": fqdn,
+            "workflow": core.get("workflow"),
+            "inputs": {
+                name: {"type": spec.get("type"), "required": bool(spec.get("required"))}
+                for name, spec in sorted((core.get("inputs") or {}).items())
+            },
+        }
+
     if capability is not None:
         if capability in contracts:
             return "SUCCESS", {
@@ -122,6 +142,8 @@ def capability_surface(snapshot: Snapshot, params: dict[str, Any]) -> tuple[str,
                 "transforms": [],
                 "contract_count": 1,
                 "contracts": [contracts[capability]],
+                "intent_count": 0,
+                "intents": [],
             }
         if capability in transforms:
             return "SUCCESS", {
@@ -132,6 +154,8 @@ def capability_surface(snapshot: Snapshot, params: dict[str, Any]) -> tuple[str,
                 "transforms": [transforms[capability]],
                 "contract_count": 0,
                 "contracts": [],
+                "intent_count": 0,
+                "intents": [],
             }
         if capability not in surfaces:
             return "NOT_FOUND", {
@@ -148,4 +172,6 @@ def capability_surface(snapshot: Snapshot, params: dict[str, Any]) -> tuple[str,
         "transforms": list(transforms.values()),
         "contract_count": len(contracts),
         "contracts": list(contracts.values()),
+        "intent_count": len(intents),
+        "intents": list(intents.values()),
     }
