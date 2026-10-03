@@ -10,10 +10,12 @@ add a command, and it is then automatically present.
     si <group> <verb> [args]        one command per Operation Identity: si.artifact.show → si artifact show
     si operations                   the catalog itself
     si --snapshot PATH …            which snapshot to read
+    si --trace-root PATH …          where a named trace is read (only `si execution explain` reads one)
 
 Snapshot resolution, in order: `--snapshot`, `$PGC_SNAPSHOT_ROOT`, `./snapshot`. The only
 requirement is that the directory carry a `manifest.json` — an ASSEMBLED snapshot is the input
-contract, and nothing else is gated on.
+contract, and nothing else is gated on. Trace root: `--trace-root`, else `$PGC_DATA_ROOT` — the
+root the runtime wrote the trace under, so the reference it returned resolves unchanged.
 
 Exit codes: 0 on SUCCESS, 1 on NOT_FOUND, 2 on usage or snapshot error. `si snapshot validate
 --strict` additionally exits 1 when the snapshot is invalid, so it works as a CI gate.
@@ -69,6 +71,8 @@ def _build_parser(operations: dict[str, Operation]
     )
     parser.add_argument("--snapshot", default=None, metavar="PATH",
                         help="snapshot root (default: $PGC_SNAPSHOT_ROOT, else ./snapshot)")
+    parser.add_argument("--trace-root", default=None, metavar="PATH",
+                        help="root a named trace is read under (default: $PGC_DATA_ROOT)")
     parser.add_argument("--json", action="store_true", help="emit the raw payload as JSON")
     groups = parser.add_subparsers(dest="group", metavar="<group>")
 
@@ -77,6 +81,7 @@ def _build_parser(operations: dict[str, Operation]
     # value already parsed at the top level.
     common = argparse.ArgumentParser(add_help=False)
     common.add_argument("--snapshot", metavar="PATH", default=argparse.SUPPRESS)
+    common.add_argument("--trace-root", metavar="PATH", default=argparse.SUPPRESS)
     common.add_argument("--json", action="store_true", default=argparse.SUPPRESS)
 
     by_group: dict[str, list[Operation]] = {}
@@ -241,7 +246,8 @@ def main(argv: list[str] | None = None) -> int:
     params = {k: v for k, v in params.items() if v not in (None, False)}
 
     try:
-        status, payload = query(operation, params, root)
+        trace_root = args.trace_root or os.environ.get("PGC_DATA_ROOT")
+        status, payload = query(operation, params, root, trace_root=trace_root)
     except SnapshotError as exc:
         print(f"si: {exc}", file=sys.stderr)
         return 2

@@ -75,6 +75,7 @@ privately believes. There is no second list anywhere.
 | `si.vocab.resolve` | READ | `artifact` \| `address`+`domain` | identity ↔ per-domain address |
 | `si.behavior_logic.list` | READ | — | workflows carrying a published graph, with their node keys |
 | `si.behavior_logic.show` | READ | `wf` | one workflow's execution graph |
+| `si.execution.explain` | QUERY | `trace` | one run's path, how it ended, and why each node decided as far as the trace records it (an admission gate's checks; a capability's outcome, not its reasons), with captured inputs and artifacts; reads a named trace under the trace root and refuses one produced under another snapshot |
 | `si.rule_set.list` | READ | `artifact?` | every artifact carrying a sealed rule set, and the rule identifiers it declares |
 | `si.catalog` | READ | — | every operation this inspector answers |
 

@@ -33,10 +33,13 @@ class SnapshotError(RuntimeError):
 
 
 class Snapshot:
-    def __init__(self, root: Path) -> None:
+    def __init__(self, root: Path, trace_root: Path | None = None) -> None:
         self.root = Path(root)
         if not self.root.is_dir():
             raise SnapshotError(f"snapshot root is not a directory: {self.root}")
+        # Where the one trace-reading query may read a named trace (`inspector.trace`). Carried,
+        # never read here: a trace is not snapshot material. None when none is provisioned.
+        self.trace_root = Path(trace_root) if trace_root is not None else None
         self._cache: dict[str, Any] = {}
 
     # ── raw reads ────────────────────────────────────────────────

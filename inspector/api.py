@@ -1,6 +1,6 @@
 """inspector.api — the single programmatic entry point for snapshot inspection.
 
-    query(operation, params, snapshot_root)  -> (status, payload)
+    query(operation, params, snapshot_root, trace_root=None)  -> (status, payload)
     operations(snapshot_root)                -> the published catalog
     operation_kind(operation, snapshot_root) -> the handler kind a boundary routes it by
 
@@ -18,6 +18,10 @@ believes.
 A missing REQUIRED parameter is NOT_FOUND, not a raise: the caller asked a well-formed question the
 snapshot cannot answer as posed. An operation the snapshot does not declare raises, because no
 amount of parameters would make it answerable here — that is a caller defect, not a result.
+
+`trace_root` is the one input beyond the snapshot: the root a named trace is read under, used only
+by the operation that explains a run (`inspector.trace`). Whoever runs the inspector provisions it,
+as they provision the snapshot root; an operation that reads no trace never consults it.
 """
 from __future__ import annotations
 
@@ -43,9 +47,11 @@ def query(
     operation: str,
     params: dict[str, Any],
     snapshot_root: str | Path,
+    trace_root: str | Path | None = None,
 ) -> tuple[str, dict[str, Any]]:
     """Answer an inspection Operation Identity over the assembled snapshot at `snapshot_root`."""
-    snapshot = Snapshot(Path(snapshot_root))
+    snapshot = Snapshot(Path(snapshot_root),
+                        trace_root=Path(trace_root) if trace_root is not None else None)
     op = _resolve(operation, snapshot)
 
     params = params or {}

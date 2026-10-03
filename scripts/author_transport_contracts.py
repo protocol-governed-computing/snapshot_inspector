@@ -41,6 +41,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from inspector.queries.artifact_refs import artifact_refs
+from inspector.queries.execution_explain import execution_explain
 from inspector.queries.snapshot_validate import snapshot_validate
 from inspector.queries.topology_impact import topology_impact
 from inspector.reads.artifact_indexed import artifact_indexed
@@ -188,6 +189,15 @@ SPECS: dict[str, Spec] = {
         "One workflow's compiled execution graph and its rendered projection.",
         behavior_logic_show, ["wf", "domain", "graph", "graph_path", "projection_path"],
         {"wf": (STRING, True)}),
+    # The one operation that reads beyond the snapshot: a named trace, under the provisioned trace
+    # root, refused unless it names this snapshot. `trace` is the reference the runtime returned.
+    "si.execution.explain": Spec(
+        SNAPSHOT_QUERY, "BEHAVIOR", "Explain run",
+        "One run's path, why each route was taken as far as the trace records it, its captured inputs and artifacts.",
+        execution_explain,
+        ["trace", "trace_id", "snapshot_id", "tie", "wf", "domain", "status", "ending", "visits",
+         "captured_inputs", "undeclared_routes", "artifacts"],
+        {"trace": (STRING, True)}),
 }
 
 

@@ -33,6 +33,7 @@ from typing import Any, Callable
 from inspector.kinds import SNAPSHOT_QUERY, SNAPSHOT_READ  # noqa: F401 — re-exported
 
 from inspector.queries.artifact_refs import artifact_refs
+from inspector.queries.execution_explain import execution_explain
 from inspector.queries.snapshot_validate import snapshot_validate
 from inspector.queries.topology_impact import topology_impact
 from inspector.reads.artifact_indexed import artifact_indexed
@@ -72,6 +73,7 @@ _PROJECTIONS: tuple[Projection, ...] = (
     vocab_resolve,
     behavior_logic_list,
     behavior_logic_show,
+    execution_explain,
 )
 
 

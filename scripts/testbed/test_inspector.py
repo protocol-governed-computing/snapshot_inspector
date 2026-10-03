@@ -593,6 +593,173 @@ def test_capability_surface() -> None:
         check("capability_surface_absent_not_found", status == "NOT_FOUND")
 
 
+# ── execution explain (the one operation that reads a trace) ─────
+
+_TRACE_REF = "traces/d/WF_X_V0/t1/t1.jsonl"
+
+
+def _trace(trace_root: Path, *, snapshot_id: str = "abc123", head: bool = True,
+           ref: str = _TRACE_REF) -> None:
+    """A run of d::WF_X_V0 the way the runtime records one: one node, one captured atom, one exit."""
+    def ev(kind, detail, **fields):
+        return {"trace_schema_version": "v1", "trace_id": "t1", "event_type": kind,
+                "domain": "d", "detail": detail, **fields}
+    records = [
+        {"trace_schema_version": "v1", "event_type": "trace_classification",
+         "snapshot_id": snapshot_id, "determinative": [], "observational": []},
+        ev("WF_START", {"wf_fqdn": "d::WF_X_V0", "payload_keys": []}),
+        ev("CC_START", {"cc_fqdn": "d::CC_A_V0", "node": "CC_A_V0"}, cc_addr=7),
+        ev("CT_STEP", {"path": "__atom_result__", "step_fqdn": "d::CT_GUESS_V0",
+                       "purity": "ct_impure", "result_keys": ["guess"],
+                       "outcome": {"guess": 42}, "replayed": False}, cc_addr=7, step_addr=8),
+        ev("CC_STEP", {"step_fqdn": "d::CT_GUESS_V0", "result_keys": ["guess"]}, cc_addr=7, step_addr=8),
+        ev("CC_COMPLETE", {"cc_fqdn": "d::CC_A_V0", "node": "CC_A_V0"}, cc_addr=7,
+           result_status="SUCCESS"),
+        ev("WF_ROUTE", {"terminal": True, "from_node": "CC_A_V0", "to_node": "EXIT_OK"},
+           cc_addr=7, result_status="SUCCESS"),
+        ev("WF_COMPLETE", {"wf_fqdn": "d::WF_X_V0"}, result_status="SUCCESS"),
+    ]
+    if not head:
+        records = records[1:]
+    path = trace_root / ref
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("".join(json.dumps(r) + "\n" for r in records), encoding="utf-8")
+
+
+def test_execution_explain() -> None:
+    with Fixture() as root, tempfile.TemporaryDirectory() as tmp:
+        traces = Path(tmp)
+        _trace(traces)
+
+        status, payload = query("si.execution.explain", {"trace": _TRACE_REF}, root, trace_root=traces)
+        check("explain_success", status == "SUCCESS", str(payload))
+        check("explain_names_run", payload.get("wf") == "d::WF_X_V0" and payload.get("status") == "SUCCESS")
+        check("explain_tie_is_claimed", payload.get("tie", {}).get("standing") == "claimed")
+        visits = payload.get("visits", [])
+        check("explain_path", [v["node"] for v in visits] == ["CC_A_V0", "EXIT_OK"])
+        route = visits[0]["route"] if visits else {}
+        check("explain_route_outcome_recorded", route.get("outcome") == "SUCCESS" and route.get("terminal"))
+        # The fixture graph declares no edges: the recorded route is reported, and flagged.
+        check("explain_route_undeclared_flagged",
+              route.get("snapshot", {}).get("declared_edge") is False
+              and len(payload.get("undeclared_routes", [])) == 1)
+        # Joined facts sit apart from recorded ones.
+        check("explain_joined_kept_apart",
+              visits[0]["snapshot"] == {"declared": True, "type": "CC", "capability": None,
+                                        "capability_type": None})
+        captured = payload.get("captured_inputs", [])
+        check("explain_captured_input", len(captured) == 1 and captured[0]["value"] == {"guess": 42}
+              and captured[0]["routed_by"]["outcome"] == "SUCCESS")
+        kinds = {a["fqdn"]: a for a in payload.get("artifacts", [])}
+        check("explain_artifacts_joined", kinds.get("d::WF_X_V0", {}).get("kind") == "WF"
+              and kinds.get("d::CT_GUESS_V0", {}).get("indexed") is False)
+
+        # A declared edge is recognised as one.
+        graph = json.loads((root / "behavior_logic/d/WF_X_V0/WF_X_V0.graph.json").read_text())
+        graph["edges"] = [{"from": "CC_A_V0", "to": "EXIT_OK", "condition": "SUCCESS"}]
+        _write(root, "behavior_logic/d/WF_X_V0/WF_X_V0.graph.json", graph)
+        _, payload = query("si.execution.explain", {"trace": _TRACE_REF}, root, trace_root=traces)
+        check("explain_route_declared", payload["visits"][0]["route"]["snapshot"]["declared_edge"] is True
+              and payload["undeclared_routes"] == [])
+
+        # Refusals: each is NOT_FOUND with a reason, never an empty explanation.
+        def refused(name, params, trace_root=traces, needle=""):
+            status, payload = query("si.execution.explain", params, root, trace_root=trace_root)
+            check(name, status == "NOT_FOUND" and needle in payload.get("reason", "")
+                  and "visits" not in payload, str(payload))
+
+        refused("explain_refuses_without_root", {"trace": _TRACE_REF}, trace_root=None,
+                needle="no trace root")
+        refused("explain_refuses_parent_escape", {"trace": "../t1.jsonl"}, needle="relative path")
+        refused("explain_refuses_absolute", {"trace": str(traces / _TRACE_REF)}, needle="relative path")
+        refused("explain_refuses_absent", {"trace": "traces/none.jsonl"}, needle="no trace")
+        refused("explain_missing_param", {}, needle="missing required")
+
+        _trace(traces, snapshot_id="other", ref="traces/other.jsonl")
+        refused("explain_refuses_other_snapshot", {"trace": "traces/other.jsonl"}, needle="other")
+
+        _trace(traces, head=False, ref="traces/headless.jsonl")
+        refused("explain_refuses_untied_trace", {"trace": "traces/headless.jsonl"},
+                needle="trace_classification")
+
+        (traces / "traces/broken.jsonl").write_text("{not json\n", encoding="utf-8")
+        refused("explain_refuses_malformed", {"trace": "traces/broken.jsonl"}, needle="line 1")
+
+        outside = Path(tmp).parent / "pgc_explain_outside.jsonl"
+        try:
+            outside.write_text("", encoding="utf-8")
+            (traces / "traces/link.jsonl").symlink_to(outside)
+            refused("explain_refuses_symlink_escape", {"trace": "traces/link.jsonl"},
+                    needle="outside the trace root")
+        finally:
+            outside.unlink(missing_ok=True)
+
+        # Phase 2 — why. The happy run ends at a declared ending, decided by a capability outcome
+        # whose reasons the trace does not hold; the answer says so rather than supplying one.
+        _, payload = query("si.execution.explain", {"trace": _TRACE_REF}, root, trace_root=traces)
+        check("explain_declared_ending", payload["ending"]["kind"] == "declared_ending"
+              and payload["ending"]["ending"] == "EXIT_OK" and payload["ending"]["decided_at"] == "CC_A_V0")
+        check("explain_capability_reason_not_supplied",
+              payload["visits"][0]["determination"]["basis"] == "capability outcome")
+
+        def run(name, records):
+            path = traces / f"traces/{name}.jsonl"
+            head = {"trace_schema_version": "v1", "event_type": "trace_classification",
+                    "snapshot_id": "abc123", "determinative": [], "observational": []}
+            body = [{"trace_schema_version": "v1", "trace_id": name, "event_type": k, "domain": "d",
+                     "detail": d, **f} for k, d, f in records]
+            path.write_text("".join(json.dumps(r) + "\n" for r in [head, *body]), encoding="utf-8")
+            return query("si.execution.explain", {"trace": f"traces/{name}.jsonl"}, root,
+                         trace_root=traces)[1]
+
+        start = ("WF_START", {"wf_fqdn": "d::WF_X_V0", "payload_keys": ["n"]}, {})
+        checks = [{"field": "n", "rule": "required", "expected": True, "held": True},
+                  {"field": "n", "rule": "type", "expected": "integer", "held": False}]
+        refused_run = run("nack", [
+            start,
+            ("CC_STEP", {"step_fqdn": "d::IN_X_V0", "result_keys": ["outcome"], "checks": checks},
+             {"cc_addr": 5, "step_addr": 5, "step_op": "ADMIT"}),
+            ("WF_ROUTE", {"terminal": True, "from_node": "IN_X_V0", "to_node": "EXIT_REJECTED"},
+             {"cc_addr": 5, "result_status": "NACK"}),
+            ("WF_COMPLETE", {"wf_fqdn": "d::WF_X_V0"}, {"result_status": "NACK"}),
+        ])
+        gate = refused_run["visits"][0]["determination"]
+        check("explain_admission_checks_recorded", gate["basis"] == "recorded admission checks"
+              and gate["failed"] == [checks[1]])
+        check("explain_refusal_decided_at_gate", refused_run["ending"]["decided_at"] == "IN_X_V0"
+              and refused_run["ending"]["outcome"] == "NACK")
+
+        legacy = run("legacy", [
+            start,
+            ("CC_STEP", {"step_fqdn": "d::IN_X_V0", "result_keys": ["outcome"]},
+             {"cc_addr": 5, "step_addr": 5, "step_op": "ADMIT"}),
+        ])
+        check("explain_unrecorded_checks_said_so",
+              legacy["visits"][0]["determination"]["basis"] == "not recorded")
+        check("explain_incomplete_run", legacy["ending"]["kind"] == "incomplete")
+
+        unanswered = run("unrouted", [
+            start,
+            ("CC_START", {"cc_fqdn": "d::CC_A_V0", "node": "CC_A_V0"}, {"cc_addr": 7}),
+            ("CC_COMPLETE", {"cc_fqdn": "d::CC_A_V0", "node": "CC_A_V0"},
+             {"cc_addr": 7, "result_status": "ODD"}),
+            ("ERROR", {"message": "unrouted outcome", "outcome": "ODD"}, {}),
+            ("WF_ROUTE", {"terminal": True, "from_node": "CC_A_V0", "to_node": None},
+             {"cc_addr": 7, "result_status": "ODD"}),
+            ("WF_COMPLETE", {"wf_fqdn": "d::WF_X_V0"}, {"result_status": "VIOLATION"}),
+        ])
+        check("explain_no_declared_answer", unanswered["ending"]["kind"] == "no_declared_answer"
+              and unanswered["ending"]["at"] == "CC_A_V0"
+              and unanswered["visits"][0]["errors"][0]["message"] == "unrouted outcome")
+        check("explain_no_phantom_visit", [v["node"] for v in unanswered["visits"]] == ["CC_A_V0"])
+
+        # The CLI reaches it with a trace root, as any other client does.
+        code, out = _cli(["--trace-root", str(traces), "execution", "explain", _TRACE_REF], root)
+        check("cli_explain_exit0", code == 0 and "si.execution.explain" in out)
+        code, _ = _cli(["--trace-root", str(traces), "execution", "explain", "traces/other.jsonl"], root)
+        check("cli_explain_refusal_exit1", code == 1)
+
+
 # ── CLI (a client of the API, never a second engine) ─────────────
 
 def _cli(argv: list[str], root: Path) -> tuple[int, str]:
@@ -720,6 +887,7 @@ def main() -> None:
         test_rule_set_list,
         test_vocab,
         test_behavior_logic,
+        test_execution_explain,
         test_snapshot_reads,
         test_stores,
         test_capability_surface,
