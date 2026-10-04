@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pgc-inspector"
-version = "4.0.0"
+version = "5.0.0"
 description = "PGC snapshot inspector — read-only query surface over compiled projections and sealed snapshots (command: si)"
 readme = "README.md"
 requires-python = ">=3.10"
