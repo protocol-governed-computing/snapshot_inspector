@@ -1,7 +1,7 @@
 """Semantic graph — the traversal substrate behind every SNAPSHOT_QUERY operation.
 
 The graph is the union of every domain's `evidence/<domain>/evidence.json` (artifact-level nodes
-+ typed edges), deduplicated: an artifact visible to three domain builds contributes one node and
++ typed edges) and the composition's record of references in each canonical artifact, deduplicated: an artifact visible to three domain builds contributes one node and
 its edges once. Operations here are STRUCTURAL only — neighbourhood, closure, grouping. No domain
 knowledge and no PGC semantics live here; that is what keeps inspection from becoming a second
 governance engine.
@@ -54,6 +54,23 @@ class SemanticGraph:
                     kind=edge["kind"],
                     metadata_json=json.dumps(edge.get("metadata", {}), sort_keys=True),
                 ))
+
+        # The composition's record of references, from each canonical artifact. Evidence keeps only
+        # addressed nodes and the edges within one domain, so a constitution, an actor, a moment, or
+        # a platform artifact a domain names is invisible there: inspection reported 2 artifacts
+        # referring to the rule that governs assertion, while 138 name it. Each recorded reference
+        # becomes a REFERENCES edge unless evidence already carries a typed edge for the same pair.
+        typed = {(e.source, e.target) for e in edges}
+        for fqdn, entry in snapshot.entries().items():
+            nodes.setdefault(fqdn, entry.get("kind", "UNKNOWN"))
+            # An index naming a canonical file that is absent is a broken snapshot, and
+            # `si.snapshot.validate` reports it as such (`index_locators_resolve`); the graph does not
+            # stop that report from being made.
+            if not snapshot.has(entry.get("canonical_path", "")):
+                continue
+            for target in (snapshot.canonical(fqdn) or {}).get("references", []) or []:
+                if (fqdn, target) not in typed:
+                    edges.add(Edge(source=fqdn, target=target, kind="REFERENCES", metadata_json="{}"))
 
         self.nodes = nodes
         self.edges = sorted(edges, key=lambda e: (e.source, e.target, e.kind, e.metadata_json))
