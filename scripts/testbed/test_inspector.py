@@ -461,6 +461,16 @@ def test_refs_and_impact() -> None:
         status, _ = query("si.topology.impact", {"artifact": "d::ABSENT_V0"}, root)
         check("impact_absent_not_found", status == "NOT_FOUND")
 
+    # A reference the composition records and evidence does not carry — a constitution, an actor, a
+    # platform artifact a domain names — is still a reference. Inspection reads the record too.
+    with Fixture() as root:
+        rel = "canonical/d/structures/d__STRUCTURE_STORAGE_V0.json"
+        _write(root, rel, {**_STRUCTURE, "references": ["d::RB_X_V0"]})
+        _, payload = query("si.artifact.refs", {"artifact": "d::RB_X_V0"}, root)
+        check("refs_read_the_record_of_references",
+              [r["fqdn"] for r in payload["refs"]] == ["d::STRUCTURE_STORAGE_V0"]
+              and payload["refs"][0]["edge_kind"] == "REFERENCES", str(payload["refs"]))
+
 
 def test_validate_green() -> None:
     with Fixture() as root:
