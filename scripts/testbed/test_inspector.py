@@ -612,10 +612,10 @@ def _trace(trace_root: Path, *, snapshot_id: str = "abc123", head: bool = True,
            ref: str = _TRACE_REF) -> None:
     """A run of d::WF_X_V0 the way the runtime records one: one node, one captured atom, one exit."""
     def ev(kind, detail, **fields):
-        return {"trace_schema_version": "v1", "trace_id": "t1", "event_type": kind,
+        return {"trace_schema_version": "v2", "trace_id": "t1", "event_type": kind,
                 "domain": "d", "detail": detail, **fields}
     records = [
-        {"trace_schema_version": "v1", "event_type": "trace_classification",
+        {"trace_schema_version": "v2", "event_type": "trace_classification",
          "snapshot_id": snapshot_id, "determinative": [], "observational": []},
         ev("WF_START", {"wf_fqdn": "d::WF_X_V0", "payload_keys": []}),
         ev("CC_START", {"cc_fqdn": "d::CC_A_V0", "node": "CC_A_V0"}, cc_addr=7),
@@ -714,9 +714,9 @@ def test_execution_explain() -> None:
 
         def run(name, records):
             path = traces / f"traces/{name}.jsonl"
-            head = {"trace_schema_version": "v1", "event_type": "trace_classification",
+            head = {"trace_schema_version": "v2", "event_type": "trace_classification",
                     "snapshot_id": "abc123", "determinative": [], "observational": []}
-            body = [{"trace_schema_version": "v1", "trace_id": name, "event_type": k, "domain": "d",
+            body = [{"trace_schema_version": "v2", "trace_id": name, "event_type": k, "domain": "d",
                      "detail": d, **f} for k, d, f in records]
             path.write_text("".join(json.dumps(r) + "\n" for r in [head, *body]), encoding="utf-8")
             return query("si.execution.explain", {"trace": f"traces/{name}.jsonl"}, root,
