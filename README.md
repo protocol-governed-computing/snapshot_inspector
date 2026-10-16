@@ -127,6 +127,11 @@ Every window's content arrives from one `POST /si` carrying an Operation Identit
 selects, fetches, formats, filters and navigates; it derives **no** PGC relationship. Clicking an
 FQDN opens a new governed request for it — navigation, not a closure the browser worked out.
 
+The **workflow map** (`/workflow/?wf=<FQDN>`) draws one workflow from its compiled graph, with its
+entrance in front, and opens the declaration behind each box. It answers from four operations —
+`si.behavior_logic.show`, `si.artifact.refs`, `si.artifact.show` and `si.artifact.list` — and
+assembles no FQDN of its own: every node's identity is the one `si.artifact.refs` returned.
+
 ## The `inspection::` tool domain
 
 This repo also hosts the domain that declares the boundary: `registry/` (build config) and

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workflow Map — Protocol Inspection</title>
+    <link rel="stylesheet" href="/css/base.css">
+    <link rel="stylesheet" href="css/workflow.css">
+</head>
+<body>
+    <header class="app-header">
+        <div class="header-inner">
+            <h1 class="app-title">Protocol&#8209;Governed&nbsp;Computing <span class="accent">Inspection</span></h1>
+        </div>
+        <nav class="screen-nav">
+            <a href="/">&larr; Surface</a>
+            <a href="./">All workflows</a>
+        </nav>
+    </header>
+
+    <div class="container map-wide">
+        <h2 id="map-title">Workflow map</h2>
+        <p class="map-sub" id="map-sub">
+            Every box is a declaration in the sealed snapshot. Click one to read it. This page only
+            reads, and every read is a governed <code>si.</code> operation.
+        </p>
+
+        <section id="picker" class="map-panel" hidden>
+            <h3>Choose a workflow</h3>
+            <ul id="workflow-list"></ul>
+        </section>
+
+        <section id="map" class="map-panel" hidden>
+            <svg id="wf-diagram" role="img" aria-label="Compiled workflow"></svg>
+        </section>
+
+        <section id="detail" class="map-panel" hidden></section>
+
+        <section class="map-panel" id="kinds" hidden>
+            <h3>What the kinds mean</h3>
+            <table>
+                <tr><td><code>TI</code> entrance</td><td>what a caller may send, and where it goes</td></tr>
+                <tr><td><code>IN</code> entry point</td><td>what a request must carry to be admitted</td></tr>
+                <tr><td><code>WF</code> workflow</td><td>the boxes, the order they run in, and every way a run can end</td></tr>
+                <tr><td><code>CC</code> contract</td><td>one unit of work and the steps inside it</td></tr>
+                <tr><td><code>CT</code> transform</td><td>one computation, the only place code runs</td></tr>
+                <tr><td><code>CS</code> side effect</td><td>what a step may read or write, and nothing more</td></tr>
+                <tr><td><code>EXIT</code> ending</td><td>how a run finishes, and what it announces</td></tr>
+            </table>
+        </section>
+    </div>
+
+    <footer class="app-footer" id="footer">
+        PGC Inspection Surface &mdash; read-only, governed, protocol-neutral interaction boundary
+    </footer>
+
+    <script src="js/workflow_diagram.js"></script>
+    <script src="js/workflow_map.js"></script>
+</body>
+</html>
