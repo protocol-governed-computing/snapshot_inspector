@@ -6,8 +6,7 @@
  * graph the compiler sealed. The main row follows each node's ACK/SUCCESS route; every other ending
  * sits below the first box that can reach it. Two routes between the same boxes are one edge.
  *
- * The Collatz client carries the same file (conformance_workloads/workloads/collatz/client/web/collatz/js/workflow_diagram.js);
- * change both together.
+ * The Collatz client draws its workflow with this file too, served to it at `/diagram/`.
  * Styling is the page's: classes `box`, `edge`, `taken`, `selected`, `clickable`, `ending`.
  */
 (function () {
