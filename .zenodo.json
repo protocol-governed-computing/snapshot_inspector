@@ -1,0 +1,32 @@
+{
+  "upload_type": "software",
+  "title": "PGC Reference Implementation: Snapshot Inspector (snapshot_inspector)",
+  "description": "<p>Read-only inspection over assembled PGC snapshots, providing the governed read surface used for grounding and status during transformation.</p><p>Part of the Protocol-Governed Computing reference corpus. Cite the version DOI of the release you used, not the concept DOI.</p>",
+  "creators": [
+    {
+      "name": "Ganti, Bhash",
+      "orcid": "0009-0007-3810-6520",
+      "affiliation": "Independent researcher"
+    }
+  ],
+  "license": "Apache-2.0",
+  "keywords": [
+    "protocol-governed computing",
+    "governance",
+    "declarative semantics",
+    "conformance",
+    "inspection",
+    "read surface"
+  ],
+  "access_right": "open",
+  "language": "eng",
+  "related_identifiers": [
+    {
+      "identifier": "10.5281/zenodo.22150616",
+      "relation": "references",
+      "resource_type": "software",
+      "scheme": "doi"
+    }
+  ],
+  "notes": "Implements or supports the Open PGC Standard (10.5281/zenodo.22150616). Version is taken from the GitHub release tag; do not hard-code it here."
+}

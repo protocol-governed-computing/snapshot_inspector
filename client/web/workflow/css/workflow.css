@@ -1,0 +1,37 @@
+/* workflow.css — the workflow map screen (extends base.css). */
+
+.map-wide { max-width: 1040px; }
+.container h2#map-title { font-size: 18px; color: #0b1e3c; margin-bottom: 4px; word-break: break-all; }
+.map-sub { font-size: 13px; color: #64748b; line-height: 1.6; margin-bottom: 10px; }
+.map-sub code, .map-panel code { background: #f1f5f9; padding: 1px 4px; border-radius: 3px; font-size: 12px; }
+.map-panel { margin-top: 18px; padding: 18px; border: 1px solid #e2e8f0; border-radius: 6px; background: #fff; }
+.map-panel h3 { font-size: 14px; color: #0b1e3c; margin-bottom: 8px; word-break: break-all; }
+.map-panel ul { list-style: none; columns: 2; font-size: 13px; line-height: 1.9; }
+.map-panel table { border-collapse: collapse; width: 100%; font-size: 13px; }
+.map-panel td { padding: 5px 10px 5px 0; border-bottom: 1px solid #e2e8f0; color: #475569; vertical-align: top; }
+.map-error { color: #991b1b; font-size: 13px; }
+
+pre.declaration {
+    background: #1e293b; color: #e2e8f0; border-radius: 6px; padding: 12px 14px; margin-top: 6px;
+    font: 12.5px/1.55 'Courier New', monospace; overflow: auto; max-height: 30em;
+}
+pre.declaration mark { background: #5c4a12; color: #fde68a; }
+
+.step-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.pick-btn {
+    background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; padding: 5px 12px;
+    font-size: 13px; color: #0b1e3c; cursor: pointer; font-family: 'Courier New', monospace;
+}
+.pick-btn:hover { background: #0b1e3c; color: #d4af37; border-color: #0b1e3c; }
+
+/* workflow_diagram.js */
+svg.workflow { width: 100%; height: auto; display: block; }
+svg.workflow .box rect { fill: #f8fafc; stroke: #94a3b8; stroke-width: 1.2; }
+svg.workflow .box .kind { fill: #64748b; font: bold 11px 'Courier New', monospace; }
+svg.workflow .box .name { fill: #0b1e3c; font: 13px Arial, Helvetica, sans-serif; }
+svg.workflow .edge path { fill: none; stroke: #94a3b8; stroke-width: 1.2; }
+svg.workflow .edge text { fill: #64748b; font: 10px 'Courier New', monospace; }
+svg.workflow .arrow { fill: #94a3b8; }
+svg.workflow .box.clickable { cursor: pointer; }
+svg.workflow .box.clickable:hover rect { stroke: #0b1e3c; }
+svg.workflow .box.selected rect { fill: #fdf6e0; stroke: #b8941f; stroke-width: 2.2; }

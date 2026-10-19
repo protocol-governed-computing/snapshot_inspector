@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Protocol Inspection — Surface</title>
+    <link rel="stylesheet" href="/css/base.css">
+    <link rel="stylesheet" href="css/inspection.css">
+</head>
+<body class="surface-body">
+    <header class="app-header">
+        <div class="header-inner">
+            <h1 class="app-title">Protocol&#8209;Governed&nbsp;Computing <span class="accent">Inspection</span></h1>
+        </div>
+        <nav class="screen-nav">
+            <a href="/">&larr; Surface</a>
+            <a href="#" id="nav-tile">Tile windows</a>
+            <a href="#" id="nav-close-all">Close all</a>
+        </nav>
+    </header>
+
+    <!-- The launcher. It is never replaced and never blocked: choosing an entry opens an
+         independent window beside it. -->
+    <section class="launcher" id="launcher">
+        <div class="launcher-head">
+            <h2>Protocol Inspection</h2>
+            <p class="launcher-sub">
+                Read-only inspection of the PGC snapshot. Every entry below is a governed
+                <em>Operation Identity</em>, fetched from the boundary itself &mdash; this menu lists
+                what can actually be answered, not a copy of a list kept somewhere else.
+            </p>
+            <p class="snapshot-line" id="snapshot-line">reading catalog&hellip;</p>
+        </div>
+        <div class="catalog" id="catalog"></div>
+    </section>
+
+    <div class="window-layer" id="window-layer"></div>
+
+    <footer class="app-footer">
+        Every window&rsquo;s content arrives from one <code>POST /si</code> carrying an Operation
+        Identity. The client renders results; it derives none.
+    </footer>
+
+    <script src="js/inspection_surface.js"></script>
+</body>
+</html>

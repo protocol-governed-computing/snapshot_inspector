@@ -1,0 +1,6 @@
+{
+  "_note": "HTTP External Protocol Binding (Patch 2) — adapter-owned config, promotable to an XB_ artifact. The si. family shares ONE route: the Operation Identity travels in the body, and the namespace is an ADMISSION CONSTRAINT the adapter checks — never a dispatcher it branches on. Each identity still resolves against its own governed TI/TE pair.",
+  "bindings": [
+    { "method": "POST", "path": "/si", "operation_in_body": true, "namespace": "si." }
+  ]
+}
