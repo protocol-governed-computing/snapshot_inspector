@@ -34,6 +34,7 @@ from inspector.kinds import SNAPSHOT_QUERY, SNAPSHOT_READ  # noqa: F401 — re-e
 
 from inspector.queries.artifact_refs import artifact_refs
 from inspector.queries.execution_explain import execution_explain
+from inspector.queries.kind_map import kind_map
 from inspector.queries.snapshot_validate import snapshot_validate
 from inspector.queries.topology_impact import topology_impact
 from inspector.reads.artifact_indexed import artifact_indexed
@@ -59,6 +60,7 @@ _PROJECTIONS: tuple[Projection, ...] = (
     snapshot_summary,
     snapshot_topology,
     snapshot_validate,
+    kind_map,
     artifact_list,
     rule_set_list,
     capability_surface,

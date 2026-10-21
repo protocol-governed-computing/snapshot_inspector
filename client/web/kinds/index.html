@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kind Map — Protocol Inspection</title>
+    <link rel="stylesheet" href="/css/base.css">
+    <link rel="stylesheet" href="css/kinds.css">
+</head>
+<body>
+    <header class="app-header">
+        <div class="header-inner">
+            <h1 class="app-title">Protocol&#8209;Governed&nbsp;Computing <span class="accent">Inspection</span></h1>
+        </div>
+        <nav class="screen-nav">
+            <a href="/">&larr; Surface</a>
+            <a href="/workflow/">Workflow map</a>
+        </nav>
+    </header>
+
+    <div class="container kinds-wide">
+        <h2 id="kinds-title">Kind map</h2>
+        <p class="kinds-sub" id="kinds-sub">
+            Every artifact kind in the sealed snapshot, and how kinds refer to kinds. Click a kind to
+            read what it declares. This page only reads, through <code>si.kind.map</code>.
+        </p>
+        <p class="kinds-stats" id="kinds-stats"></p>
+
+        <div class="kinds-layout">
+            <section class="kinds-panel kinds-drawing">
+                <div class="kinds-toolbar">
+                    <label><input type="checkbox" id="show-governance"> Show references to constitutions</label>
+                    <label><input type="checkbox" id="show-counts" checked> Show counts</label>
+                    <span class="kinds-legend" id="kinds-legend"></span>
+                </div>
+                <div class="kinds-scroll">
+                    <svg id="kinds-diagram" class="kinds" viewBox="0 0 1000 640" role="img"
+                         aria-label="Artifact kinds and the references between them"></svg>
+                </div>
+                <p class="kinds-sub kinds-caption">
+                    A number on an arrow counts distinct artifact pairs: <em>123</em> from workflow to
+                    contract means 123 different workflow&ndash;contract links. Line weight follows it.
+                    Hover an arrow for the typed edges it is made of.
+                </p>
+            </section>
+            <section class="kinds-panel kinds-detail" id="kinds-detail" aria-live="polite"></section>
+        </div>
+        <p class="kinds-error" id="kinds-error" hidden></p>
+    </div>
+
+    <footer class="app-footer">
+        PGC Inspection Surface &mdash; read-only, governed, protocol-neutral interaction boundary
+    </footer>
+
+    <script src="js/kind_map.js"></script>
+</body>
+</html>

@@ -472,6 +472,83 @@ def test_refs_and_impact() -> None:
               and payload["refs"][0]["edge_kind"] == "REFERENCES", str(payload["refs"]))
 
 
+def test_kind_map() -> None:
+    with Fixture() as root:
+        # A second typed edge between the same two artifacts: one link, however many relations.
+        _write(root, "evidence/d/evidence.json", {
+            "nodes": [{"fqdn": "d::WF_X_V0", "kind": "WF"}, {"fqdn": "d::CC_A_V0", "kind": "CC"},
+                      {"fqdn": "shared::CS_STORE_V0", "kind": "CS"}],
+            "edges": [
+                {"kind": "WF_CONTAINS_NODE", "source_fqdn": "d::WF_X_V0", "target_fqdn": "d::CC_A_V0"},
+                {"kind": "WF_START", "source_fqdn": "d::WF_X_V0", "target_fqdn": "d::CC_A_V0"},
+                {"kind": "CC_BINDS_CS", "source_fqdn": "d::CC_A_V0", "target_fqdn": "shared::CS_STORE_V0"},
+            ],
+        })
+        status, payload = query("si.kind.map", {}, root)
+        check("kind_map_success", status == "SUCCESS")
+        check("kind_map_counts_every_artifact", payload["artifact_count"] == FIXTURE_ARTIFACTS,
+              str(payload["artifact_count"]))
+        kinds = {k["kind"]: k for k in payload["kinds"]}
+        check("kind_map_kinds_from_the_index", kinds["TI"]["count"] == len(SPECS) and kinds["WF"]["count"] == 1)
+        check("kind_map_namespace_not_directory", kinds["CS"]["namespaces"] == {"shared": 1})
+        check("kind_map_field_shares", {"name": "core.bindings", "share": 1.0} in kinds["RB"]["fields"],
+              str(kinds["RB"]["fields"]))
+        edges = {(e["from"], e["to"]): e for e in payload["edges"]}
+        wf_cc = edges.get(("WF", "CC"), {})
+        check("kind_map_counts_pairs_not_edges", wf_cc.get("pairs") == 1, str(wf_cc))
+        check("kind_map_keeps_typed_edges",
+              wf_cc.get("edge_kinds") == {"WF_CONTAINS_NODE": 1, "WF_START": 1}, str(wf_cc))
+        check("kind_map_crosses_namespaces", edges.get(("CC", "CS"), {}).get("pairs") == 1)
+        check("kind_map_no_invented_schema",
+              payload["schema_dispatch_declared"] is False and kinds["WF"]["schema"] is None)
+        check("kind_map_no_invented_ontology",
+              payload["ontology_declared"] is False and kinds["WF"]["category"] is None)
+
+        # The sealed ontology classifies a kind by its declared artifact_kind, and a category carries
+        # the runtime disposition.
+        ontology_rel = "canonical/d/vocabulary/artifact__VOCAB_GOVERNANCE_ONTOLOGY_V0.json"
+        _write(root, ontology_rel, {"fqdn_id": "artifact::VOCAB_GOVERNANCE_ONTOLOGY_V0", "artifact_type": "VOCAB",
+                                    "frontmatter": {
+            "semantic_categories": {"casing": "lower_snake", "entries": ["operational", "contractual"]},
+            "category_operational": {"casing": "UPPER_SNAKE", "entries": ["WORKFLOW"]},
+            "category_contractual": {"casing": "UPPER_SNAKE", "entries": ["CAPABILITY_CONTRACT"]},
+            "provenance_authored": {"casing": "UPPER_SNAKE", "entries": ["WORKFLOW", "CAPABILITY_CONTRACT"]},
+            "runtime_disposition_executable": {"casing": "lower_snake", "entries": ["operational"]},
+        }})
+        for fqdn, kind in (("d::WF_X_V0", "WORKFLOW"), ("d::CC_A_V0", "CAPABILITY_CONTRACT")):
+            rel = {"d::WF_X_V0": "canonical/d/workflows/d__WF_X_V0.json",
+                   "d::CC_A_V0": "canonical/d/capability_contracts/d__CC_A_V0.json"}[fqdn]
+            doc = json.loads((root / rel).read_text())
+            doc["frontmatter"]["artifact_kind"] = kind
+            _write(root, rel, doc)
+        index = json.loads((root / "artifact_index/index.json").read_text())
+        index["artifacts"]["artifact::VOCAB_GOVERNANCE_ONTOLOGY_V0"] = {
+            "domain": "d", "kind": "VOCAB", "owner_subdomain": None, "canonical_path": ontology_rel,
+            "evidence_paths": {}, "addresses": {}}
+        _write(root, "artifact_index/index.json", index)
+        _, classified = query("si.kind.map", {}, root)
+        by_kind = {k["kind"]: k for k in classified["kinds"]}
+        check("kind_map_reads_the_sealed_ontology",
+              classified["ontology_declared"] is True
+              and classified["categories"] == ["operational", "contractual"], str(classified["categories"]))
+        check("kind_map_classifies_by_declared_kind",
+              (by_kind["WF"]["category"], by_kind["WF"]["provenance"], by_kind["WF"]["runtime_disposition"])
+              == ("operational", "authored", "executable"), str(by_kind["WF"]))
+        check("kind_map_disposition_belongs_to_the_category",
+              by_kind["CC"]["category"] == "contractual" and by_kind["CC"]["runtime_disposition"] is None,
+              str(by_kind["CC"]))
+
+        export = importlib.util.spec_from_file_location(
+            "export_kind_map", Path(__file__).resolve().parent.parent / "export_kind_map.py")
+        module = importlib.util.module_from_spec(export)
+        export.loader.exec_module(module)
+        page = module.render(root)
+        check("kind_map_export_embeds_the_answer",
+              "window.KIND_MAP_RESULT" in page and '"kind_count":' in page)
+        check("kind_map_export_is_self_contained",
+              'href="/css/' not in page and 'src="js/' not in page and '<nav class="screen-nav">' not in page)
+
+
 def test_validate_green() -> None:
     with Fixture() as root:
         status, payload = query("si.snapshot.validate", {}, root)
@@ -902,6 +979,7 @@ def main() -> None:
         test_stores,
         test_capability_surface,
         test_refs_and_impact,
+        test_kind_map,
         test_validate_green,
         test_validate_detects,
         test_cli,

@@ -42,6 +42,7 @@ from pathlib import Path
 
 from inspector.queries.artifact_refs import artifact_refs
 from inspector.queries.execution_explain import execution_explain
+from inspector.queries.kind_map import kind_map
 from inspector.queries.snapshot_validate import snapshot_validate
 from inspector.queries.topology_impact import topology_impact
 from inspector.reads.artifact_indexed import artifact_indexed
@@ -105,6 +106,12 @@ SPECS: dict[str, Spec] = {
         ["snapshot_id", "strict", "valid", "check_count", "failed_checks", "advisory_checks",
          "checks"],
         {"strict": (BOOLEAN, False)}),
+    "si.kind.map": Spec(
+        SNAPSHOT_QUERY, "SNAPSHOT", "Kind map",
+        "Every artifact kind, how the ontology classifies it, what it declares, and how kinds refer to kinds.",
+        kind_map,
+        ["snapshot_id", "artifact_count", "kind_count", "edge_count", "schema_dispatch_declared",
+         "ontology_declared", "categories", "kinds", "edges"]),
 
     # ── ARTIFACTS ─────────────────────────────────────────────────
     "si.artifact.list": Spec(
