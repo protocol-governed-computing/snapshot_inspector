@@ -147,6 +147,16 @@ class Snapshot:
         """
         return self._read_json(f"evidence/{domain}/evidence.json")
 
+    def compile_trace(self, domain: str) -> dict[str, Any] | None:
+        """One domain's COMPILE TRACE: the events its build recorded, and the CAUSALITY and
+        STAGE_SEQUENCE edges between them, keyed by event id. None where the build left none.
+
+        Read only by `si.compile.trace`. It is not the semantic graph (`evidence`), and a query
+        about what an artifact refers to must never read it.
+        """
+        rel = f"evidence/{domain}/evidence_graph.json"
+        return self._read_json(rel) if self.has(rel) else None
+
     # ── behavior logic ───────────────────────────────────────────
 
     def behavior_logic_workflows(self) -> list[tuple[str, str]]:

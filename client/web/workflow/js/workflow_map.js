@@ -11,6 +11,7 @@
  *   si.behavior_logic.show   the workflow's compiled graph
  *   si.artifact.refs         its entrance (TI_INVOKES_WF) and the FQDN of every node it contains
  *   si.artifact.show         the declaration behind a box
+ *   si.execution.explain     one run's path and why it went there, when a trace is named
  *
  * It renders answers and derives nothing: no FQDN is assembled from a name, and no relationship is
  * computed here that the inspector did not return.
@@ -18,6 +19,11 @@
  *   /workflow/?wf=workload::WF_COLLATZ_CONJECTURE_V0#TI_COLLATZ_COMPUTE_V0
  *
  * opens that workflow, and the box named after `#`.
+ *
+ *   /workflow/?trace=<trace reference>
+ *
+ * opens the workflow that run executed and marks the path it took, place by place. The trace is read
+ * by `si.execution.explain`, under the data root the surface is served with.
  */
 (function () {
     const OPERATION_ROUTE = '/si';
@@ -154,8 +160,61 @@
         document.getElementById('picker').hidden = false;
     }
 
+    // The path a run took, as `si.execution.explain` gives it: each visit's route, in order. A route
+    // that reached neither routing nor an ending stops the path at the node that produced it. A
+    // visit with no node key is a trace older than node keys, and is refused rather than guessed.
+    function taken(explanation) {
+        const nodes = [], edges = [];
+        for (const visit of explanation.visits || []) {
+            const route = visit.route;
+            if (!route) continue;
+            if (!visit.node) throw new Error('the trace\'s routes carry no node keys — it predates them; re-run it');
+            nodes.push(visit.node);
+            if (route.to == null) break;
+            nodes.push(route.to);
+            edges.push([visit.node, route.to]);
+        }
+        return { nodes, edges };
+    }
+
+    // What the trace recorded about why a node decided as it did.
+    function recorded(visit) {
+        const lines = [];
+        const d = visit.determination || {};
+        if (d.basis === 'recorded admission checks') {
+            const failed = d.failed || [];
+            if (failed.length) failed.forEach((c) => lines.push('✗ ' + c.field + ': ' + c.rule + ' ' + c.expected));
+            else lines.push('✓ ' + (d.checks || []).length + ' check(s) held');
+        } else if (d.basis === 'capability outcome') {
+            lines.push('→ ' + d.outcome);
+        } else if (d.basis === 'not recorded') {
+            lines.push('checks not recorded');
+        }
+        (visit.atoms || []).filter((a) => a.captured).forEach((a) =>
+            lines.push('captured: ' + String(a.atom || '').split('::').pop() + (a.replayed ? ' (replayed)' : '')));
+        (visit.errors || []).forEach((e) => lines.push('ERROR: ' + e.message));
+        return lines;
+    }
+
+    function showRun(explanation) {
+        const rows = (explanation.visits || []).map((v) => {
+            const route = v.route ? escapeHtml(v.route.outcome || '') + ' → ' + escapeHtml(v.route.to || '(no route)') : '';
+            const why = recorded(v).map((l) => '<div class="run-why">' + escapeHtml(l) + '</div>').join('');
+            return '<li><code>' + escapeHtml(v.node || '?') + '</code> ' + route + why + '</li>';
+        }).join('');
+        const undeclared = (explanation.undeclared_routes || []).length;
+        detail.hidden = false;
+        detail.innerHTML = '<h3>Run ' + escapeHtml(explanation.trace_id || '') + '</h3>'
+            + '<p class="map-sub">' + escapeHtml(explanation.status || '') + ' — the marked boxes and routes are the path the trace records.'
+            + (undeclared ? ' ' + undeclared + ' route(s) the run took are not declared by the workflow.' : '') + '</p>'
+            + '<ol class="run-visits">' + rows + '</ol>';
+    }
+
     async function load() {
-        wfFqdn = new URLSearchParams(location.search).get('wf');
+        const params = new URLSearchParams(location.search);
+        const trace = params.get('trace');
+        const explanation = trace ? await ask('si.execution.explain', { trace: trace }) : null;
+        wfFqdn = params.get('wf') || (explanation && explanation.wf);
         if (!wfFqdn) return listWorkflows();
 
         const [shown, refs] = await Promise.all([
@@ -177,6 +236,10 @@
             + (ti ? 'Start with <b>TI</b>, the entrance, and walk right.' : 'Start at the left and walk right.') + '</p>';
         const summary = await ask('si.snapshot.summary', {});
         document.getElementById('footer').textContent = 'Reading snapshot ' + summary.snapshot_id;
+        if (explanation) {
+            diagram.mark(taken(explanation));
+            showRun(explanation);
+        }
         fromHash();
     }
 

@@ -93,11 +93,11 @@ The split is load-bearing, not cosmetic:
 | kind | what it does | examples |
 |---|---|---|
 | `SNAPSHOT_READ` | **projects published material** — retrieves what is already there, with no traversal and no evaluation | artefact list/show, vocabulary, behaviour logic, capability surface, store list |
-| `SNAPSHOT_QUERY` | **derives an answer** by traversing and evaluating snapshot state | references and dependencies, topology impact, snapshot validation, the kind map, a run's explanation |
+| `SNAPSHOT_QUERY` | **derives an answer** by traversing and evaluating snapshot state | references and dependencies, topology impact, snapshot validation, the kind map, a run's explanation, an artifact's compile trace |
 
 A read that quietly computed a relationship would be a query wearing a read's clothes — cheaper to
-call, and carrying an authority it never declared. Twenty operations ship in this release,
-fifteen reads and five queries.
+call, and carrying an authority it never declared. Twenty-one operations ship in this release,
+fifteen reads and six queries.
 
 ## 5. What it owns, and what it must never do
 
@@ -162,7 +162,8 @@ Both are realization hazards worth stating plainly, because neither announces it
    wrong. Resolution goes through the artefact index, whose recorded path is authoritative.
 2. **The evidence file has a lookalike sibling.** One is the semantic graph of typed, identity-keyed
    edges; the other is the compile trace and carries no artefact-level edges. Reading the wrong one
-   yields an **empty result, not an error** — a confident, well-formed, entirely wrong answer.
+   yields an **empty result, not an error** — a confident, well-formed, entirely wrong answer. Only
+   `si.compile.trace` reads the compile trace, through its own accessor.
 
 The second hazard is not hypothetical: a store-consumer query in an earlier release answered
 "nothing uses this" for fourteen of fifteen stores, and every part of the system reported healthy.
@@ -264,7 +265,7 @@ PYTHONPATH=. python3 -m inspector catalog           # what THIS snapshot declare
 PYTHONPATH=. python3 -m inspector snapshot validate # does it hold together?
 ```
 
-A good result has a specific shape. The catalog reports the same twenty operations as there are
+A good result has a specific shape. The catalog reports the same twenty-one operations as there are
 contracts in `transport/` — because both come from the same declarations, not because someone kept
 them in step. `validate` reports its checks individually, separating failures from advisories,
 rather than collapsing to a single pass/fail. And the check that matters most for this

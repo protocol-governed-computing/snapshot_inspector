@@ -42,6 +42,7 @@ from pathlib import Path
 
 from inspector.queries.artifact_refs import artifact_refs
 from inspector.queries.execution_explain import execution_explain
+from inspector.queries.compile_trace import compile_trace
 from inspector.queries.kind_map import kind_map
 from inspector.queries.snapshot_validate import snapshot_validate
 from inspector.queries.topology_impact import topology_impact
@@ -120,6 +121,11 @@ SPECS: dict[str, Spec] = {
         "The artifact catalog, optionally narrowed by kind or namespace.",
         artifact_list, ["filter", "artifact_count", "artifacts"],
         {"kind": (STRING, False), "domain": (STRING, False)}),
+    "si.compile.trace": Spec(
+        SNAPSHOT_QUERY, "ARTIFACTS", "Compile trace",
+        "How each build came to produce an artifact — its compile events, what led to them and what they led to.",
+        compile_trace, ["artifact", "domain_count", "domains"],
+        {"artifact": (STRING, True), "domain": (STRING, False)}),
     "si.artifact.show": Spec(
         SNAPSHOT_READ, "ARTIFACTS", "Show",
         "The published canonical artifact for an FQDN, as authored.",

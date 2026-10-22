@@ -570,6 +570,38 @@ def test_kind_map() -> None:
               'href="/css/' not in page and 'src="js/' not in page and '<nav class="screen-nav">' not in page)
 
 
+def test_compile_trace() -> None:
+    with Fixture() as root:
+        _write(root, "evidence/d/evidence_graph.json", {
+            "events": [
+                {"event_id": 0, "stage": "S1_EXTRACT", "family": "DISCOVERY", "operation": "discovery_complete",
+                 "subject_fqdn": "", "detail": {}},
+                {"event_id": 1, "stage": "S1_EXTRACT", "family": "DISCOVERY", "operation": "node_created",
+                 "subject_fqdn": "d::WF_X_V0", "detail": {}},
+                {"event_id": 2, "stage": "S7_MATERIALIZE", "family": "MATERIALIZATION", "operation": "artifact_written",
+                 "subject_fqdn": "d::WF_X_V0", "detail": {"output_path": "compiled/canonical/workflows/d__WF_X_V0.json"}},
+                {"event_id": 3, "stage": "S8_VERIFY", "family": "VERIFICATION", "operation": "verified",
+                 "subject_fqdn": "", "detail": {}},
+            ],
+            "edges": [
+                {"kind": "CAUSALITY", "source_event_id": 0, "target_event_id": 1},
+                {"kind": "CAUSALITY", "source_event_id": 2, "target_event_id": 3},
+                {"kind": "STAGE_SEQUENCE", "source_event_id": 1, "target_event_id": 2},
+            ],
+        })
+        status, payload = query("si.compile.trace", {"artifact": "d::WF_X_V0"}, root)
+        trace = payload["domains"][0] if status == "SUCCESS" else {}
+        check("compile_trace_events", [e["event_id"] for e in trace.get("events", [])] == [1, 2], str(payload))
+        check("compile_trace_follows_causality_only",
+              [e["event_id"] for e in trace.get("upstream", [])] == [0]
+              and [e["event_id"] for e in trace.get("downstream", [])] == [3], str(trace))
+        check("compile_trace_written", trace.get("written") == ["compiled/canonical/workflows/d__WF_X_V0.json"])
+        status, _ = query("si.compile.trace", {"artifact": "d::WF_ABSENT_V0"}, root)
+        check("compile_trace_absent_not_found", status == "NOT_FOUND")
+        status, missing = query("si.compile.trace", {"artifact": "d::WF_X_V0", "domain": "nowhere"}, root)
+        check("compile_trace_unknown_domain", status == "NOT_FOUND" and missing["known_domains"] == ["d", "e"])
+
+
 def test_validate_green() -> None:
     with Fixture() as root:
         status, payload = query("si.snapshot.validate", {}, root)
@@ -996,6 +1028,7 @@ def main() -> None:
         test_vocab,
         test_behavior_logic,
         test_execution_explain,
+        test_compile_trace,
         test_snapshot_reads,
         test_stores,
         test_capability_surface,

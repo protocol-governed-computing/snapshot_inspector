@@ -33,6 +33,7 @@ from typing import Any, Callable
 from inspector.kinds import SNAPSHOT_QUERY, SNAPSHOT_READ  # noqa: F401 — re-exported
 
 from inspector.queries.artifact_refs import artifact_refs
+from inspector.queries.compile_trace import compile_trace
 from inspector.queries.execution_explain import execution_explain
 from inspector.queries.kind_map import kind_map
 from inspector.queries.snapshot_validate import snapshot_validate
@@ -67,6 +68,7 @@ _PROJECTIONS: tuple[Projection, ...] = (
     artifact_show,
     artifact_indexed,
     artifact_refs,
+    compile_trace,
     topology_impact,
     store_list,
     store_show,
