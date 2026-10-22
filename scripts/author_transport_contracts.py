@@ -108,10 +108,11 @@ SPECS: dict[str, Spec] = {
         {"strict": (BOOLEAN, False)}),
     "si.kind.map": Spec(
         SNAPSHOT_QUERY, "SNAPSHOT", "Kind map",
-        "Every artifact kind, how the ontology classifies it, what it declares, and how kinds refer to kinds.",
+        "Every artifact kind, how the ontology classifies it, what it declares, and how kinds refer to kinds; optionally for one composed domain.",
         kind_map,
-        ["snapshot_id", "artifact_count", "kind_count", "edge_count", "schema_dispatch_declared",
-         "ontology_declared", "categories", "kinds", "edges"]),
+        ["snapshot_id", "filter", "domains", "artifact_count", "kind_count", "edge_count",
+         "schema_dispatch_declared", "ontology_declared", "categories", "kinds", "edges"],
+        {"domain": (STRING, False)}),
 
     # ── ARTIFACTS ─────────────────────────────────────────────────
     "si.artifact.list": Spec(

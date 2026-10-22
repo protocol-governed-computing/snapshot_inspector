@@ -39,6 +39,8 @@ default_result_class: EXECUTION_FAILURE
 
 output_contract:
 - { field: snapshot_id             , from: surface.snapshot_id }
+- { field: filter                  , from: surface.filter }
+- { field: domains                 , from: surface.domains }
 - { field: artifact_count          , from: surface.artifact_count }
 - { field: kind_count              , from: surface.kind_count }
 - { field: edge_count              , from: surface.edge_count }

@@ -21,7 +21,8 @@
     <div class="container kinds-wide">
         <h2 id="kinds-title">Kind map</h2>
         <p class="kinds-sub" id="kinds-sub">
-            Every artifact kind in the sealed snapshot, and how kinds refer to kinds. Click a kind to
+            Every artifact kind in the sealed snapshot, and how kinds refer to kinds. Choose a domain
+            to see one composed domain, with the platform capabilities it reaches. Click a kind to
             read what it declares. This page only reads, through <code>si.kind.map</code>.
         </p>
         <p class="kinds-stats" id="kinds-stats"></p>
@@ -29,6 +30,7 @@
         <div class="kinds-layout">
             <section class="kinds-panel kinds-drawing">
                 <div class="kinds-toolbar">
+                    <label>Domain <select id="kinds-domain"><option value="">Whole snapshot</option></select></label>
                     <label><input type="checkbox" id="show-governance"> Show references to constitutions</label>
                     <label><input type="checkbox" id="show-counts" checked> Show counts</label>
                     <span class="kinds-legend" id="kinds-legend"></span>

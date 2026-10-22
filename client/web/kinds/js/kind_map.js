@@ -3,10 +3,12 @@
  *
  * The page is the answer to one `si.` operation, sent as
  *
- *     POST /si   { "operation": "si.kind.map", "params": {} }
+ *     POST /si   { "operation": "si.kind.map", "params": {} }          the whole snapshot
+ *     POST /si   { "operation": "si.kind.map", "params": { "domain": d } }   one composed domain
  *
- * or, in a page written by `scripts/export_kind_map.py`, that same answer embedded as
- * `window.KIND_MAP_RESULT`. Either way the page renders the answer and derives nothing: kinds,
+ * or, in a page written by `scripts/export_kind_map.py`, those answers embedded as
+ * `window.KIND_MAP_RESULTS`, keyed by domain ('' for the whole snapshot). `?domain=<d>` in the
+ * address opens one domain. Either way the page renders the answer and derives nothing: kinds,
  * counts, field shares and edges all come from the operation. Placement on the drawing is the one
  * thing this file decides, and a kind it has no place for still appears, in the bottom row.
  */
@@ -229,20 +231,62 @@
         detail.querySelectorAll('.link').forEach((b) => b.addEventListener('click', () => select(b.dataset.kind)));
     }
 
-    function start(result) {
+    function show(result) {
         answer = result;
+        const domain = (result.filter || {}).domain;
         document.getElementById('kinds-stats').innerHTML =
             '<b>' + result.artifact_count + '</b><span>artifacts</span>'
             + '<b>' + result.kind_count + '</b><span>kinds</span>'
             + '<b>' + result.edge_count + '</b><span>kind-to-kind relations</span>'
-            + '<span>snapshot ' + escapeHtml(String(result.snapshot_id).slice(0, 12)) + '…</span>';
+            + '<span>' + (domain ? 'domain ' + escapeHtml(domain) + ' · ' : '')
+            + 'snapshot ' + escapeHtml(String(result.snapshot_id).slice(0, 12)) + '…</span>';
         document.getElementById('kinds-legend').innerHTML = result.ontology_declared
             ? result.categories.map((c) => '<span><i class="swatch" style="background:' + colourOf(c) + '"></i>' + escapeHtml(label(c)) + '</span>').join('')
             : '<span>This snapshot seals no ontology, so kinds are not classified.</span>';
         draw();
-        select(result.kinds.some((k) => k.kind === 'WF') ? 'WF' : result.kinds[0].kind);
+        if (!result.kinds.length) {
+            detail.innerHTML = '<p>This domain holds no artifacts.</p>';
+            return;
+        }
+        const keep = selected && result.kinds.some((k) => k.kind === selected) ? selected : null;
+        select(keep || (result.kinds.some((k) => k.kind === 'WF') ? 'WF' : result.kinds[0].kind));
+    }
+
+    // The answer for one domain ('' for the whole snapshot): embedded in an exported page, asked of
+    // the live surface otherwise.
+    function answerFor(domain) {
+        if (window.KIND_MAP_RESULTS) {
+            const result = window.KIND_MAP_RESULTS[domain];
+            return result ? Promise.resolve(result)
+                : Promise.reject(new Error('this page holds no kind map for domain ' + domain));
+        }
+        return ask('si.kind.map', domain ? { domain: domain } : {});
+    }
+
+    function open(domain) {
+        document.getElementById('kinds-error').hidden = true;
+        return answerFor(domain).then(show).catch(fail);
+    }
+
+    function start(result) {
+        const picker = document.getElementById('kinds-domain');
+        (result.domains || []).forEach((d) => {
+            const option = document.createElement('option');
+            option.value = d;
+            option.textContent = d;
+            picker.appendChild(option);
+        });
+        const wanted = new URLSearchParams(window.location.search).get('domain') || '';
+        picker.value = (result.domains || []).indexOf(wanted) < 0 ? '' : wanted;
+        picker.addEventListener('change', () => {
+            const url = new URL(window.location.href);
+            if (picker.value) { url.searchParams.set('domain', picker.value); } else { url.searchParams.delete('domain'); }
+            window.history.replaceState(null, '', url);
+            open(picker.value);
+        });
         document.getElementById('show-governance').addEventListener('change', draw);
         document.getElementById('show-counts').addEventListener('change', draw);
+        if (picker.value) { open(picker.value); } else { show(result); }
     }
 
     function fail(err) {
@@ -251,9 +295,5 @@
         box.textContent = 'The kind map could not be read: ' + err.message;
     }
 
-    if (window.KIND_MAP_RESULT) {
-        start(window.KIND_MAP_RESULT);
-    } else {
-        ask('si.kind.map', {}).then(start).catch(fail);
-    }
+    answerFor('').then(start).catch(fail);
 })();

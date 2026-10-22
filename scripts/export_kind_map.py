@@ -3,9 +3,10 @@
 Write the kind map of a snapshot as one self-contained HTML page.
 
 The page is the browser surface's own (`client/web/kinds/`), with its stylesheets and script
-inlined and the answer to `si.kind.map` embedded, so it opens from disk with no server. The
-answer is asked through `inspector.api.query` like any other consumer's: this script renders, it
-does not inspect. A snapshot that does not declare `si.kind.map` cannot be exported, because the
+inlined and the answers to `si.kind.map` embedded, so it opens from disk with no server: one for the
+whole snapshot and one for each domain it composes, so the page's domain selector works offline.
+The answers are asked through `inspector.api.query` like any other consumer's: this script
+renders, it does not inspect. A snapshot that does not declare `si.kind.map` cannot be exported, because the
 operation set is the snapshot's to declare.
 
     PYTHONPATH=. python3 scripts/export_kind_map.py --snapshot <snapshot dir> --out <file.html>
@@ -37,13 +38,19 @@ def _replace_once(page: str, old: str, new: str) -> str:
     return page.replace(old, new)
 
 
-def render(snapshot: Path) -> str:
+def _ask(snapshot: Path, params: dict) -> dict:
     try:
-        status, result = query("si.kind.map", {}, snapshot)
+        status, result = query("si.kind.map", params, snapshot)
     except KeyError as missing:
         raise SystemExit(f"export_kind_map: {missing.args[0]}") from None
     if status != "SUCCESS":
         raise SystemExit(f"export_kind_map: si.kind.map answered {status}: {result}")
+    return result
+
+
+def render(snapshot: Path) -> str:
+    whole = _ask(snapshot, {})
+    results = {"": whole, **{d: _ask(snapshot, {"domain": d}) for d in whole.get("domains", [])}}
 
     page = PAGE.read_text(encoding="utf-8")
     for tag, css in STYLESHEETS.items():
@@ -52,10 +59,10 @@ def render(snapshot: Path) -> str:
     start, end = page.index(NAV_START), page.index(NAV_END) + len(NAV_END)
     page = page[:start] + page[end:]
     # `</` cannot end the embedding script early once every `/` after `<` is escaped.
-    data = json.dumps(result, separators=(",", ":")).replace("</", "<\\/")
+    data = json.dumps(results, separators=(",", ":")).replace("</", "<\\/")
     script = SCRIPT_FILE.read_text(encoding="utf-8")
     return _replace_once(page, SCRIPT,
-                         f"<script>window.KIND_MAP_RESULT = {data};</script>\n<script>\n{script}</script>")
+                         f"<script>window.KIND_MAP_RESULTS = {data};</script>\n<script>\n{script}</script>")
 
 
 def main(argv: list[str]) -> int:

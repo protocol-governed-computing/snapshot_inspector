@@ -503,6 +503,26 @@ def test_kind_map() -> None:
               payload["schema_dispatch_declared"] is False and kinds["WF"]["schema"] is None)
         check("kind_map_no_invented_ontology",
               payload["ontology_declared"] is False and kinds["WF"]["category"] is None)
+        check("kind_map_whole_snapshot_by_default",
+              payload["filter"] == {"domain": None} and payload["domains"] == ["d", "e"])
+
+        # A domain is a composed domain: an artifact is in it when the index addresses it there, and
+        # an edge counts when both its artifacts are.
+        index = json.loads((root / "artifact_index/index.json").read_text())
+        index["artifacts"]["d::CC_A_V0"]["addresses"] = {"d": "0x0002"}
+        _write(root, "artifact_index/index.json", index)
+        status, scoped = query("si.kind.map", {"domain": "d"}, root)
+        scoped_edges = {(e["from"], e["to"]) for e in scoped["edges"]}
+        check("kind_map_domain_selects_addressed_artifacts",
+              status == "SUCCESS" and scoped["artifact_count"] == 2
+              and {k["kind"] for k in scoped["kinds"]} == {"WF", "CC"}, str(scoped["kinds"]))
+        check("kind_map_domain_keeps_edges_inside_it",
+              scoped_edges == {("WF", "CC")} and scoped["filter"] == {"domain": "d"}, str(scoped_edges))
+        status, empty = query("si.kind.map", {"domain": "e"}, root)
+        check("kind_map_empty_domain_is_an_answer", status == "SUCCESS" and empty["artifact_count"] == 0)
+        status, missing = query("si.kind.map", {"domain": "nowhere"}, root)
+        check("kind_map_unknown_domain_not_found",
+              status == "NOT_FOUND" and missing["known_domains"] == ["d", "e"], str(missing))
 
         # The sealed ontology classifies a kind by its declared artifact_kind, and a category carries
         # the runtime disposition.
@@ -544,7 +564,8 @@ def test_kind_map() -> None:
         export.loader.exec_module(module)
         page = module.render(root)
         check("kind_map_export_embeds_the_answer",
-              "window.KIND_MAP_RESULT" in page and '"kind_count":' in page)
+              "window.KIND_MAP_RESULTS" in page and '"kind_count":' in page)
+        check("kind_map_export_embeds_every_domain", '"d":{' in page and '"e":{' in page)
         check("kind_map_export_is_self_contained",
               'href="/css/' not in page and 'src="js/' not in page and '<nav class="screen-nav">' not in page)
 

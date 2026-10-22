@@ -37,13 +37,15 @@ operation: si.kind.map
 # A parameter declared `type: boolean` is what a client renders as a switch; `flags` is derived
 # from the contract, never stated twice.
 input_contract:
-  {}
+  domain:
+    type: string
+    required: false
 
 # Presentation — the published catalog a client builds its menu from.
 catalog:
   category: SNAPSHOT
   label: Kind map
-  summary: Every artifact kind, how the ontology classifies it, what it declares, and how kinds refer to kinds.
+  summary: Every artifact kind, how the ontology classifies it, what it declares, and how kinds refer to kinds; optionally for one composed domain.
 
 # Context requirements — inert in V0 (AC reserved).
 context_requirements: []
@@ -55,5 +57,5 @@ handler:
     module: inspector.queries.kind_map
     callable: kind_map
   payload_template:
-    {}
+    domain: "${input.domain}"
 ```

@@ -14,6 +14,13 @@ platform's own `structure::STRUCTURE_SCHEMA_DISPATCH_V0`. A kind's semantic cate
 and runtime disposition come from the sealed Governance Ontology, `artifact::VOCAB_GOVERNANCE_ONTOLOGY_V0`.
 A snapshot that carries either declaration reports what it says; one that carries neither reports
 `schema_dispatch_declared` or `ontology_declared` as false rather than inventing an answer.
+
+**A domain narrows the map to one composed domain.** `domain` names a domain the manifest composes,
+such as `platform` or `blockchain`, not a namespace. An artifact is in that domain when the index
+gives it an address there, so a platform capability a domain reaches is part of the domain's map.
+An edge counts when both its artifacts are in the domain. Without `domain`, the map is the whole
+snapshot. A domain the manifest does not compose is NOT_FOUND, so a typo cannot pass for an empty
+domain.
 """
 from __future__ import annotations
 
@@ -57,7 +64,15 @@ def _ontology(frontmatter: dict[str, Any]) -> dict[str, dict[str, str]]:
 
 
 def kind_map(snapshot: Snapshot, params: dict[str, Any]) -> tuple[str, dict[str, Any]]:
-    entries = snapshot.entries()
+    domain = params.get("domain")
+    domains = snapshot.domains()
+    if domain is not None and domain not in domains:
+        return "NOT_FOUND", {
+            "reason": f"this snapshot composes no domain {domain!r}",
+            "known_domains": domains,
+        }
+    entries = {fqdn: entry for fqdn, entry in snapshot.entries().items()
+               if domain is None or domain in (entry.get("addresses") or {})}
     graph = SemanticGraph(snapshot)
 
     def kind_of(fqdn: str) -> str:
@@ -109,6 +124,8 @@ def kind_map(snapshot: Snapshot, params: dict[str, Any]) -> tuple[str, dict[str,
     pairs: dict[tuple[str, str], set[tuple[str, str]]] = defaultdict(set)
     typed: dict[tuple[str, str], dict[str, set[tuple[str, str]]]] = defaultdict(lambda: defaultdict(set))
     for edge in graph.edges:
+        if domain is not None and not (edge.source in entries and edge.target in entries):
+            continue
         key = (kind_of(edge.source), kind_of(edge.target))
         pair = (edge.source, edge.target)
         pairs[key].add(pair)
@@ -128,6 +145,8 @@ def kind_map(snapshot: Snapshot, params: dict[str, Any]) -> tuple[str, dict[str,
 
     return "SUCCESS", {
         "snapshot_id": snapshot.snapshot_id(),
+        "filter": {"domain": domain},
+        "domains": domains,
         "artifact_count": sum(counts.values()),
         "kind_count": len(kinds),
         "edge_count": len(edges),
