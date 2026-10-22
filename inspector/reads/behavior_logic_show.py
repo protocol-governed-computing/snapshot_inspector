@@ -1,9 +1,8 @@
 """si.behavior_logic.show — project one workflow's published execution graph.
 
 Returns the compiled `<WF>.graph.json` (entry node, nodes with their CT/CS projections, edges with
-their routing conditions, and the enumerated execution paths) exactly as published, plus the
-relative path of the rendered PNG. The image itself is fetched directly as a binary asset (§3
-rule 6) rather than inlined here.
+their routing conditions, and the enumerated execution paths) exactly as published. The snapshot
+holds no picture of it: the inspector's workflow page draws it from this graph.
 
 The workflow is addressed by FQDN. Its behavior-logic directory is keyed by the SNAPSHOT DOMAIN,
 which is not always the FQDN namespace, so the domain is resolved through the artifact index.

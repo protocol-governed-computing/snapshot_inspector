@@ -247,15 +247,13 @@ function renderEnvelope(status, output, envelope, op) {
     output.innerHTML = '';
     const result = envelope.result || {};
 
-    // A rendered projection is a binary asset, fetched directly from the snapshot mount rather
-    // than inlined in a governed response (Plan §3 rule 6). Fail-soft: a missing PNG hides.
-    if (result.projection_path) {
-        const img = document.createElement('img');
-        img.className = 'bl-img';
-        img.src = '/snapshot/' + result.projection_path;
-        img.alt = 'behaviour-logic projection';
-        img.onerror = () => img.remove();
-        output.appendChild(img);
+    // A workflow's graph is drawn by the workflow page, from the same governed answer.
+    if (result.graph && result.wf) {
+        const link = document.createElement('a');
+        link.className = 'bl-link';
+        link.href = '/workflow/?wf=' + encodeURIComponent(result.wf);
+        link.textContent = 'Draw this workflow →';
+        output.appendChild(link);
     }
 
     output.appendChild(renderValue(result));

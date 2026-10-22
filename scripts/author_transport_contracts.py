@@ -194,8 +194,8 @@ SPECS: dict[str, Spec] = {
         behavior_logic_list, ["workflow_count", "workflows"]),
     "si.behavior_logic.show": Spec(
         SNAPSHOT_READ, "BEHAVIOR", "Logic Graph",
-        "One workflow's compiled execution graph and its rendered projection.",
-        behavior_logic_show, ["wf", "domain", "graph", "graph_path", "projection_path"],
+        "One workflow's compiled execution graph.",
+        behavior_logic_show, ["wf", "domain", "graph", "graph_path"],
         {"wf": (STRING, True)}),
     # The one operation that reads beyond the snapshot: a named trace, under the provisioned trace
     # root, refused unless it names this snapshot. `trace` is the reference the runtime returned.

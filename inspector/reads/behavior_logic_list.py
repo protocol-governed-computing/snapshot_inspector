@@ -29,6 +29,5 @@ def behavior_logic_list(snapshot: Snapshot, params: dict[str, Any]) -> tuple[str
             "node_count": len(graph.get("nodes", [])),
             "path_count": len(graph.get("execution_paths", [])),
             "graph_path": logic["graph_path"] if logic else None,
-            "projection_path": logic["projection_path"] if logic else None,
         })
     return "SUCCESS", {"workflow_count": len(workflows), "workflows": workflows}

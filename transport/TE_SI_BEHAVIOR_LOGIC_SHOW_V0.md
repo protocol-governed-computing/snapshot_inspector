@@ -38,11 +38,10 @@ result_classification:
 default_result_class: EXECUTION_FAILURE
 
 output_contract:
-- { field: wf             , from: surface.wf }
-- { field: domain         , from: surface.domain }
-- { field: graph          , from: surface.graph }
-- { field: graph_path     , from: surface.graph_path }
-- { field: projection_path, from: surface.projection_path }
+- { field: wf        , from: surface.wf }
+- { field: domain    , from: surface.domain }
+- { field: graph     , from: surface.graph }
+- { field: graph_path, from: surface.graph_path }
 
 evidence_policy: none
 ```

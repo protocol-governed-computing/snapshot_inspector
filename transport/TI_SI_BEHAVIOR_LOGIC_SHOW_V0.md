@@ -45,7 +45,7 @@ input_contract:
 catalog:
   category: BEHAVIOR
   label: Logic Graph
-  summary: One workflow's compiled execution graph and its rendered projection.
+  summary: One workflow's compiled execution graph.
 
 # Context requirements — inert in V0 (AC reserved).
 context_requirements: []

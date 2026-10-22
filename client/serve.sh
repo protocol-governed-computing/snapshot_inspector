@@ -29,11 +29,10 @@ export PGC_IMPL_ROOTS="$UMBRELLA/software_governance:$UMBRELLA/conformance_workl
 export PGC_HTTP_BINDINGS="$CLIENT/bindings/http.json"
 export PGC_SNAPSHOT_ROOT="${PGC_SNAPSHOT_ROOT:-$UMBRELLA/snapshot}"
 export PGC_DATA_ROOT="${PGC_DATA_ROOT:-$UMBRELLA/data/inspection_client}"
-# Static mounts (all READ-ONLY, config-driven):
-#   /          the web client (shell + inspection screen)
-#   /snapshot  live inspection of the assembled snapshot — serves behaviour-logic PNGs, which are
-#              binary assets fetched directly rather than inlined in a governed response.
-export PGC_STATIC_MOUNTS="/=$CLIENT/web;/snapshot=$PGC_SNAPSHOT_ROOT"
+# Static mounts (READ-ONLY, config-driven): / is the web client (shell and inspection screens).
+# Everything the screens show comes through governed operations on /si; nothing is fetched from the
+# snapshot directly.
+export PGC_STATIC_MOUNTS="/=$CLIENT/web"
 export PGC_HTTP_PORT="${PGC_HTTP_PORT:-8001}"
 
 echo "PGC inspection surface (snapshot-bound)"

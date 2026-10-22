@@ -128,7 +128,7 @@
 .linkish { color: #0b1e3c; cursor: pointer; text-decoration: underline dotted; }
 .linkish:hover { color: #92400e; }
 
-.bl-img { max-width: 100%; margin-top: 8px; border: 1px solid #e2e8f0; border-radius: 4px; }
+.bl-link { display: inline-block; margin-top: 8px; font-size: 13px; }
 .err-box { background: #fef2f2; border: 1px solid #fca5a5; border-radius: 6px; padding: 10px; font-size: 13px; }
 .err-box .code { font-weight: bold; color: #991b1b; font-family: 'Courier New', monospace; }
 

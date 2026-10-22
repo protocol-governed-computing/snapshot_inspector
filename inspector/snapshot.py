@@ -10,7 +10,7 @@ layout is encoded, so projections stay layout-agnostic:
     canonical/<domain>/<kind>/*.json               the artifacts themselves
     vocabulary/<domain>/{forward,reverse}.json     address ↔ identity
     evidence/<domain>/evidence.json                the semantic graph (nodes + typed edges)
-    behavior_logic/<domain>/<WF>/<WF>.graph.json   per-workflow execution graph (+ .projection.png)
+    behavior_logic/<domain>/<WF>/<WF>.graph.json   per-workflow execution graph
 
 **Artifacts are located through the artifact index, never by globbing a domain directory.** An
 artifact's FQDN namespace is not its snapshot directory: `capability_side_effects::CS_MUTABLE_JSON_V0`
@@ -162,17 +162,8 @@ class Snapshot:
         )
 
     def behavior_logic(self, domain: str, wf_code: str) -> dict[str, Any] | None:
-        """One workflow's execution graph, plus the path of its rendered projection.
-
-        The PNG is fetched directly (§3 rule 6: direct snapshot fetch is for binary assets only),
-        so this returns its path rather than its bytes.
-        """
+        """One workflow's execution graph and its path in the snapshot."""
         rel = f"behavior_logic/{domain}/{wf_code}/{wf_code}.graph.json"
         if not self.has(rel):
             return None
-        png = f"behavior_logic/{domain}/{wf_code}/{wf_code}.projection.png"
-        return {
-            "graph": self._read_json(rel),
-            "graph_path": rel,
-            "projection_path": png if self.has(png) else None,
-        }
+        return {"graph": self._read_json(rel), "graph_path": rel}
